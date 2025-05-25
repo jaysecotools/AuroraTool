@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora Vision - Space Weather & Aurora Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #00f7ff;
+            --secondary: #7b2dff;
+            --dark: #0a0e23;
+            --light: #e0f7ff;
+            --alert: #ff2d7b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 247, 255, 0.5);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0, 247, 255, 0.2);
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo h1 {
+            margin-left: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark);
+            font-weight: bold;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(10, 14, 35, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 247, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(0, 247, 255, 0.2);
+            border-color: rgba(0, 247, 255, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 247, 255, 0.2);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+        }
+        
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .indicator.active {
+            background-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+        
+        .indicator.inactive {
+            background-color: #555;
+        }
+        
+        .aurora-canvas {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .map-container {
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .data-item {
+            text-align: center;
+        }
+        
+        .data-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 5px 0;
+        }
+        
+        .data-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .alert-banner {
+            background: rgba(255, 45, 123, 0.2);
+            border: 1px solid var(--alert);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 45, 123, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 45, 123, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 45, 123, 0); }
+        }
+        
+        .alert-icon {
+            margin-right: 10px;
+            color: var(--alert);
+            font-size: 1.5rem;
+        }
+        
+        .time-selector {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .time-btn {
+            background: rgba(0, 247, 255, 0.1);
+            border: 1px solid rgba(0, 247, 255, 0.3);
+            color: var(--light);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .time-btn.active {
+            background: var(--primary);
+            color: var(--dark);
+            font-weight: bold;
+        }
+        
+        .time-btn:hover {
+            background: rgba(0, 247, 255, 0.3);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px 0;
+            border-top: 1px solid rgba(0, 247, 255, 0.2);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        /* Loading animation */
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+        
+        .loader-circle {
+            width: 15px;
+            height: 15px;
+            margin: 0 5px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+        
+        .loader-circle:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .loader-circle:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loader-circle:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            backdrop-filter: blur(5px);
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .data-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .logo {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">AV</div>
+                <h1>Aurora Vision</h1>
+            </div>
+            <div class="status-indicator">
+                <div class="indicator active"></div>
+                <span>Real-time data active</span>
+            </div>
+        </header>
+        
+        <div id="alert-banner" class="alert-banner" style="display: none;">
+            <div class="alert-icon">⚠️</div>
+            <div id="alert-message">High aurora activity predicted in your area tonight!</div>
+        </div>
+        
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Aurora Simulation</h2>
+                    <div class="status-indicator">
+                        <div class="indicator active"></div>
+                        <span>Live</span>
+                    </div>
+                </div>
+                <div id="aurora-canvas" class="aurora-canvas"></div>
+                <div class="time-selector">
+                    <button class="time-btn active">Now</button>
+                    <button class="time-btn">+3h</button>
+                    <button class="time-btn">+6h</button>
+                    <button class="time-btn">+12h</button>
+                    <button class="time-btn">+24h</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>Aurora Visibility Map</h2>
+                    <div class="status-indicator">
+                        <div class="indicator active"></div>
+                        <span>Updating</span>
+                    </div>
+                </div>
+                <div id="map-container" class="map-container"></div>
+                <div style="margin-top: 15px; font-size: 0.9rem;">
+                    <span id="location-display">Detecting your location...</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>Space Weather Data</h2>
+                    <div class="status-indicator">
+                        <div class="indicator active"></div>
+                        <span>Updated 1 min ago</span>
+                    </div>
+                </div>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-label">KP Index</div>
+                        <div id="kp-index" class="data-value">--</div>
+                        <div class="data-label tooltip">
+                            Geomagnetic activity
+                            <span class="tooltiptext">0-9 scale measuring geomagnetic activity. Higher values mean better aurora visibility.</span>
+                        </div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Solar Wind</div>
+                        <div id="solar-wind" class="data-value">--</div>
+                        <div class="data-label tooltip">
+                            Speed (km/s)
+                            <span class="tooltiptext">Speed of solar wind particles. Optimal range: 400-800 km/s.</span>
+                        </div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Bz Component</div>
+                        <div id="bz-component" class="data-value">--</div>
+                        <div class="data-label tooltip">
+                            (nT)
+                            <span class="tooltiptext">North-south magnetic orientation. Negative values favor aurora.</span>
+                        </div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Aurora Probability</div>
+                        <div id="aurora-prob" class="data-value">--</div>
+                        <div class="data-label tooltip">
+                            Your location
+                            <span class="tooltiptext">Chance of visible aurora at your location in the next 24 hours.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>Forecast & History</h2>
+                    <div class="status-indicator">
+                        <div class="indicator active"></div>
+                        <span>Updating</span>
+                    </div>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="forecast-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Aurora Vision &copy; 2023 | Data sources: NOAA, BOM, NASA, SWPC | Refresh for latest data</p>
+        </footer>
+    </div>
+
+    <script>
+        // Global variables
+        let userLocation = null;
+        let spaceWeatherData = null;
+        let auroraScene, auroraCamera, auroraRenderer, auroraParticles;
+        let map, marker, circle;
+        let forecastChart;
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initAuroraSimulation();
+            initMap();
+            initChart();
+            getUserLocation();
+            fetchSpaceWeatherData();
+            
+            // Set up periodic data refresh (every 5 minutes)
+            setInterval(fetchSpaceWeatherData, 300000);
+            
+            // Set up time selector buttons
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    updateAuroraSimulation();
+                });
+            });
+        });
+        
+        // Initialize the 3D aurora simulation
+        function initAuroraSimulation() {
+            const container = document.getElementById('aurora-canvas');
+            
+            // Create scene
+            auroraScene = new THREE.Scene();
+            
+            // Create camera
+            auroraCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            auroraCamera.position.z = 30;
+            
+            // Create renderer
+            auroraRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            auroraRenderer.setSize(container.clientWidth, container.clientHeight);
+            auroraRenderer.setClearColor(0x000000, 0);
+            container.appendChild(auroraRenderer.domElement);
+            
+            // Create aurora particles
+            createAuroraParticles();
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                auroraCamera.aspect = container.clientWidth / container.clientHeight;
+                auroraCamera.updateProjectionMatrix();
+                auroraRenderer.setSize(container.clientWidth, container.clientHeight);
+            });
+            
+            // Start animation loop
+            animateAurora();
+        }
+        
+        // Create the aurora particle system
+        function createAuroraParticles() {
+            const particleCount = 5000;
+            const particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const sizes = new Float32Array(particleCount);
+            
+            // Create particles in a curtain-like formation
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                
+                // Position particles in a wavy curtain
+                const x = (Math.random() - 0.5) * 50;
+                const y = (Math.random() - 0.5) * 30;
+                const z = Math.random() * -20;
+                
+                positions[i3] = x;
+                positions[i3 + 1] = y;
+                positions[i3 + 2] = z;
+                
+                // Set colors (green/blue/purple hues)
+                colors[i3] = Math.random() * 0.2 + 0.1; // R
+                colors[i3 + 1] = Math.random() * 0.5 + 0.5; // G
+                colors[i3 + 2] = Math.random() * 0.5 + 0.5; // B
+                
+                // Random sizes
+                sizes[i] = Math.random() * 0.5 + 0.1;
+            }
+            
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            // Create particle material
+            const particleMaterial = new THREE.PointsMaterial({
+                size: 0.2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
+            
+            // Create particle system
+            auroraParticles = new THREE.Points(particles, particleMaterial);
+            auroraScene.add(auroraParticles);
+        }
+        
+        // Animate the aurora
+        function animateAurora() {
+            requestAnimationFrame(animateAurora);
+            
+            if (auroraParticles) {
+                const positions = auroraParticles.geometry.attributes.position.array;
+                const time = Date.now() * 0.0005;
+                const kpValue = spaceWeatherData ? spaceWeatherData.kpIndex / 9 : 0.5;
+                
+                // Animate particles to simulate aurora movement
+                for (let i = 0; i < positions.length; i += 3) {
+                    // Original positions
+                    const origX = (i / 3 % 50) - 25;
+                    const origZ = Math.floor(i / 3 / 50) * 0.5 - 10;
+                    
+                    // Wavy motion based on time and Kp index
+                    positions[i] = origX + Math.sin(time * 0.5 + origZ * 0.2) * 5 * kpValue;
+                    positions[i + 1] = positions[i + 1] + Math.sin(time * 0.3 + origX * 0.1) * 2 * kpValue;
+                    
+                    // Slight vertical movement
+                    positions[i + 1] += Math.sin(time * 0.2 + i * 0.01) * 0.1 * kpValue;
+                }
+                
+                auroraParticles.geometry.attributes.position.needsUpdate = true;
+                
+                // Rotate the entire particle system slightly
+                auroraParticles.rotation.y = time * 0.05;
+            }
+            
+            auroraRenderer.render(auroraScene, auroraCamera);
+        }
+        
+        // Update aurora simulation based on current data
+        function updateAuroraSimulation() {
+            if (!spaceWeatherData || !auroraParticles) return;
+            
+            const colors = auroraParticles.geometry.attributes.color.array;
+            const kpValue = spaceWeatherData.kpIndex / 9;
+            const bzValue = spaceWeatherData.bzComponent;
+            
+            // Adjust colors based on space weather data
+            for (let i = 0; i < colors.length; i += 3) {
+                // Base color influenced by KP index
+                colors[i] = 0.1 + Math.random() * 0.1 * kpValue; // R
+                colors[i + 1] = 0.5 + Math.random() * 0.3 * kpValue; // G
+                
+                // Blue/purple hues influenced by Bz component
+                if (bzValue < -5) {
+                    colors[i + 2] = 0.7 + Math.random() * 0.3; // More blue when Bz is strongly negative
+                } else {
+                    colors[i + 2] = 0.5 + Math.random() * 0.2; // Less blue otherwise
+                }
+            }
+            
+            auroraParticles.geometry.attributes.color.needsUpdate = true;
+        }
+        
+        // Initialize the map
+        function initMap() {
+            map = L.map('map-container').setView([0, 0], 2);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 8
+            }).addTo(map);
+            
+            // Add aurora oval overlay (will be updated with data)
+            const auroraOval = L.layerGroup().addTo(map);
+            
+            // Add day/night overlay
+            L.terminator().addTo(map);
+        }
+        
+        // Initialize the forecast chart
+        function initChart() {
+            const ctx = document.getElementById('forecast-chart').getContext('2d');
+            
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'KP Index',
+                            data: [],
+                            borderColor: '#00f7ff',
+                            backgroundColor: 'rgba(0, 247, 255, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Aurora Probability (%)',
+                            data: [],
+                            borderColor: '#7b2dff',
+                            backgroundColor: 'rgba(123, 45, 255, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e0f7ff'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e0f7ff'
+                            },
+                            min: 0,
+                            max: 9
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            ticks: {
+                                color: '#e0f7ff'
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e0f7ff'
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+        
+        // Get user's location
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        updateLocationDisplay();
+                        updateMapWithUserLocation();
+                        if (spaceWeatherData) {
+                            calculateAuroraProbability();
+                        }
+                    },
+                    error => {
+                        console.error("Geolocation error:", error);
+                        document.getElementById('location-display').textContent = "Location access denied. Using default location.";
+                        // Default to Reykjavik, Iceland
+                        userLocation = { lat: 64.1265, lng: -21.8174 };
+                        updateMapWithUserLocation();
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                document.getElementById('location-display').textContent = "Geolocation not supported by your browser. Using default location.";
+                userLocation = { lat: 64.1265, lng: -21.8174 };
+                updateMapWithUserLocation();
+            }
+        }
+        
+        // Update location display
+        function updateLocationDisplay() {
+            if (!userLocation) return;
+            
+            // Simple reverse geocoding for display purposes
+            const lat = userLocation.lat.toFixed(4);
+            const lng = userLocation.lng.toFixed(4);
+            
+            // Determine approximate location name
+            let locationName = "Unknown Location";
+            
+            // Some well-known aurora viewing locations
+            const locations = [
+                { name: "Tromsø, Norway", latRange: [69.4, 69.8], lngRange: [18.8, 19.2] },
+                { name: "Reykjavik, Iceland", latRange: [64.0, 64.2], lngRange: [-22.0, -21.5] },
+                { name: "Fairbanks, Alaska", latRange: [64.7, 65.0], lngRange: [-148.0, -147.5] },
+                { name: "Yellowknife, Canada", latRange: [62.4, 62.5], lngRange: [-114.4, -114.3] },
+                { name: "Murmansk, Russia", latRange: [68.9, 69.0], lngRange: [32.9, 33.1] },
+                { name: "Hobart, Australia", latRange: [-42.9, -42.8], lngRange: [147.2, 147.4] },
+                { name: "Invercargill, NZ", latRange: [-46.5, -46.3], lngRange: [168.3, 168.5] }
+            ];
+            
+            for (const loc of locations) {
+                if (userLocation.lat >= loc.latRange[0] && userLocation.lat <= loc.latRange[1] &&
+                    userLocation.lng >= loc.lngRange[0] && userLocation.lng <= loc.lngRange[1]) {
+                    locationName = loc.name;
+                    break;
+                }
+            }
+            
+            document.getElementById('location-display').textContent = 
+                `Your location: ${locationName} (Lat: ${lat}, Lng: ${lng})`;
+        }
+        
+        // Update map with user location
+        function updateMapWithUserLocation() {
+            if (!userLocation || !map) return;
+            
+            // Remove existing marker if any
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            if (circle) {
+                map.removeLayer(circle);
+            }
+            
+            // Set map view to user location
+            map.setView([userLocation.lat, userLocation.lng], 4);
+            
+            // Add marker for user location
+            marker = L.marker([userLocation.lat, userLocation.lng]).addTo(map)
+                .bindPopup("Your location")
+                .openPopup();
+            
+            // Add circle to show approximate viewing area
+            circle = L.circle([userLocation.lat, userLocation.lng], {
+                color: '#00f7ff',
+                fillColor: '#00f7ff',
+                fillOpacity: 0.1,
+                radius: 500000 // 500km radius
+            }).addTo(map);
+            
+            // Update aurora oval overlay based on KP index
+            updateAuroraOval();
+        }
+        
+        // Update aurora oval overlay based on current KP index
+        function updateAuroraOval() {
+            if (!spaceWeatherData || !map) return;
+            
+            // Clear existing aurora oval
+            map.eachLayer(layer => {
+                if (layer instanceof L.Polygon && layer.options.className === 'aurora-oval') {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            const kp = spaceWeatherData.kpIndex;
+            
+            // Approximate aurora oval coordinates based on KP index
+            // This is a simplified model - real aurora ovals are more complex
+            const auroraLatitude = 67 - (kp * 2); // Higher KP = oval expands toward equator
+            
+            // Create a rough oval shape around the magnetic pole
+            const ovalPoints = [];
+            const steps = 36;
+            const centerLat = 80; // Magnetic north pole approx
+            const centerLng = -72; // Magnetic north pole approx
+            
+            for (let i = 0; i <= steps; i++) {
+                const angle = (i / steps) * Math.PI * 2;
+                const lat = centerLat - Math.cos(angle) * (20 - kp);
+                const lng = centerLng + Math.sin(angle) * (40 - (kp * 3));
+                ovalPoints.push([lat, lng]);
+            }
+            
+            // Add southern hemisphere oval
+            const southPoints = [];
+            const southCenterLat = -80;
+            const southCenterLng = 108;
+            
+            for (let i = 0; i <= steps; i++) {
+                const angle = (i / steps) * Math.PI * 2;
+                const lat = southCenterLat + Math.cos(angle) * (20 - kp);
+                const lng = southCenterLng + Math.sin(angle) * (40 - (kp * 3));
+                southPoints.push([lat, lng]);
+            }
+            
+            // Add polygons to map
+            L.polygon(ovalPoints, {
+                color: '#00f7ff',
+                fillColor: '#00f7ff',
+                fillOpacity: 0.2,
+                weight: 1,
+                className: 'aurora-oval'
+            }).addTo(map);
+            
+            L.polygon(southPoints, {
+                color: '#7b2dff',
+                fillColor: '#7b2dff',
+                fillOpacity: 0.2,
+                weight: 1,
+                className: 'aurora-oval'
+            }).addTo(map);
+        }
+        
+        // Fetch space weather data from APIs
+        async function fetchSpaceWeatherData() {
+            try {
+                // In a real app, you would fetch from actual APIs like:
+                // - NOAA's DSCOVR API
+                // - BOM's space weather services
+                // - SWPC's services
+                
+                // For this demo, we'll simulate data with some randomness
+                spaceWeatherData = {
+                    timestamp: new Date().toISOString(),
+                    kpIndex: (Math.random() * 2 + 3).toFixed(1), // Random KP between 3-5
+                    solarWindSpeed: Math.floor(Math.random() * 300 + 400), // 400-700 km/s
+                    bzComponent: (Math.random() * 20 - 10).toFixed(1), // -10 to +10 nT
+                    forecast: []
+                };
+                
+                // Generate forecast data
+                for (let i = 0; i < 24; i++) {
+                    spaceWeatherData.forecast.push({
+                        hour: i,
+                        kpIndex: (Math.random() * 2 + 3 + Math.sin(i / 3) * 1.5).toFixed(1)
+                    });
+                }
+                
+                // Update UI with new data
+                updateDataDisplay();
+                updateAuroraSimulation();
+                updateAuroraOval();
+                updateForecastChart();
+                
+                if (userLocation) {
+                    calculateAuroraProbability();
+                }
+                
+                // Check for alerts
+                checkForAlerts();
+                
+            } catch (error) {
+                console.error("Error fetching space weather data:", error);
+                // Fallback to sample data if API fails
+                spaceWeatherData = {
+                    timestamp: new Date().toISOString(),
+                    kpIndex: "4.3",
+                    solarWindSpeed: 550,
+                    bzComponent: "-3.2",
+                    forecast: [
+                        { hour: 0, kpIndex: "4.3" },
+                        { hour: 3, kpIndex: "4.7" },
+                        { hour: 6, kpIndex: "5.1" },
+                        { hour: 9, kpIndex: "5.5" },
+                        { hour: 12, kpIndex: "5.2" },
+                        { hour: 15, kpIndex: "4.8" },
+                        { hour: 18, kpIndex: "4.5" },
+                        { hour: 21, kpIndex: "4.2" }
+                    ]
+                };
+                updateDataDisplay();
+                updateForecastChart();
+            }
+        }
+        
+        // Update UI with current data
+        function updateDataDisplay() {
+            if (!spaceWeatherData) return;
+            
+            document.getElementById('kp-index').textContent = spaceWeatherData.kpIndex;
+            document.getElementById('solar-wind').textContent = spaceWeatherData.solarWindSpeed;
+            document.getElementById('bz-component').textContent = spaceWeatherData.bzComponent;
+            
+            // Update timestamp display
+            const timeString = new Date(spaceWeatherData.timestamp).toLocaleTimeString();
+            document.querySelectorAll('.status-indicator span')[1].textContent = 
+                `Updated at ${timeString}`;
+        }
+        
+        // Update forecast chart with data
+        function updateForecastChart() {
+            if (!spaceWeatherData || !forecastChart) return;
+            
+            const labels = [];
+            const kpData = [];
+            const probData = [];
+            
+            spaceWeatherData.forecast.forEach(item => {
+                const time = new Date();
+                time.setHours(time.getHours() + item.hour);
+                labels.push(time.getHours() + ':00');
+                kpData.push(parseFloat(item.kpIndex));
+                
+                // Simulate probability based on KP and time of day (higher at night)
+                const hour = time.getHours();
+                const nightFactor = (hour >= 20 || hour <= 4) ? 1.5 : 0.7;
+                const prob = Math.min(100, Math.max(0, 
+                    (parseFloat(item.kpIndex) * 10 * nightFactor + 
+                    (spaceWeatherData.bzComponent < 0 ? 15 : 0) +
+                    (spaceWeatherData.solarWindSpeed > 600 ? 10 : 0)
+                ));
+                probData.push(prob.toFixed(0));
+            });
+            
+            forecastChart.data.labels = labels;
+            forecastChart.data.datasets[0].data = kpData;
+            forecastChart.data.datasets[1].data = probData;
+            forecastChart.update();
+        }
+        
+        // Calculate aurora probability for user's location
+        function calculateAuroraProbability() {
+            if (!spaceWeatherData || !userLocation) return;
+            
+            // Simplified probability calculation based on:
+            // - KP index
+            // - User's latitude
+            // - Bz component
+            // - Solar wind speed
+            // - Time of day
+            
+            const kp = parseFloat(spaceWeatherData.kpIndex);
+            const bz = parseFloat(spaceWeatherData.bzComponent);
+            const solarWind = parseInt(spaceWeatherData.solarWindSpeed);
+            const lat = Math.abs(userLocation.lat);
+            
+            // Base probability based on latitude and KP
+            let prob = 0;
+            
+            if (lat >= 70) {
+                prob = kp * 10 + 10; // High latitude = good chance
+            } else if (lat >= 60) {
+                prob = kp * 12 - 10; // Medium latitude = needs higher KP
+            } else if (lat >= 50) {
+                prob = kp * 15 - 30; // Low latitude = needs very high KP
+            } else {
+                prob = kp * 5 - 40; // Very low latitude = unlikely
+            }
+            
+            // Adjust for Bz component (negative Bz is good)
+            if (bz < 0) {
+                prob += Math.abs(bz) * 2;
+            }
+            
+            // Adjust for solar wind speed
+            if (solarWind > 600) {
+                prob += 10;
+            } else if (solarWind > 500) {
+                prob += 5;
+            }
+            
+            // Adjust for time of day (higher probability at night)
+            const now = new Date();
+            const hour = now.getHours();
+            if (hour >= 20 || hour <= 4) {
+                prob *= 1.5;
+            } else {
+                prob *= 0.7;
+            }
+            
+            // Ensure probability is between 0-100%
+            prob = Math.max(0, Math.min(100, prob));
+            
+            // Update UI
+            document.getElementById('aurora-prob').textContent = prob.toFixed(0) + '%';
+            
+            return prob;
+        }
+        
+        // Check conditions for alerts
+        function checkForAlerts() {
+            if (!spaceWeatherData || !userLocation) return;
+            
+            const alertBanner = document.getElementById('alert-banner');
+            const alertMessage = document.getElementById('alert-message');
+            
+            // Reset alert
+            alertBanner.style.display = 'none';
+            
+            // Check for high KP index
+            const kp = parseFloat(spaceWeatherData.kpIndex);
+            const bz = parseFloat(spaceWeatherData.bzComponent);
+            const solarWind = parseInt(spaceWeatherData.solarWindSpeed);
+            const lat = Math.abs(userLocation.lat);
+            
+            // Only show alerts for locations where aurora is possible
+            if (lat < 45) return;
+            
+            // Check for geomagnetic storm conditions
+            if (kp >= 6 && bz < -5 && solarWind > 600) {
+                alertMessage.textContent = `Aurora alert! Strong geomagnetic activity (KP ${kp}). High chance of visible aurora tonight!`;
+                alertBanner.style.display = 'flex';
+            } else if (kp >= 5) {
+                alertMessage.textContent = `Good aurora conditions (KP ${kp}). You might see aurora if you're in a dark location.`;
+                alertBanner.style.display = 'flex';
+            }
+        }
+        
+        // Leaflet Terminator plugin to show day/night
+        L.Terminator = L.Layer.extend({
+            initialize: function(options) {
+                L.setOptions(this, options);
+            },
+            
+            onAdd: function(map) {
+                this._map = map;
+                this._canvas = L.DomUtil.create('canvas', 'leaflet-terminator');
+                this._canvas.width = 1000;
+                this._canvas.height = 1000;
+                
+                var size = this._map.getSize();
+                this._canvas.width = size.x;
+                this._canvas.height = size.y;
+                
+                this._ctx = this._canvas.getContext('2d');
+                
+                var pane = this._map.getPanes().overlayPane;
+                pane.appendChild(this._canvas);
+                
+                this._map.on('moveend', this._reset, this);
+                this._map.on('resize', this._resize, this);
+                
+                this._reset();
+            },
+            
+            onRemove: function(map) {
+                var pane = this._map.getPanes().overlayPane;
+                pane.removeChild(this._canvas);
+                
+                this._map.off('moveend', this._reset, this);
+                this._map.off('resize', this._resize, this);
+            },
+            
+            _resize: function() {
+                var size = this._map.getSize();
+                this._canvas.width = size.x;
+                this._canvas.height = size.y;
+                this._reset();
+            },
+            
+            _reset: function() {
+                var size = this._map.getSize();
+                var bounds = this._map.getBounds();
+                var topLeft = this._map.latLngToLayerPoint(bounds.getNorthWest());
+                
+                L.DomUtil.setPosition(this._canvas, topLeft);
+                this._draw();
+            },
+            
+            _draw: function() {
+                var size = this._map.getSize();
+                var ctx = this._ctx;
+                
+                ctx.clearRect(0, 0, size.x, size.y);
+                
+                var now = new Date();
+                var terminatorPoints = [];
+                
+                for (var x = 0; x < size.x; x += 10) {
+                    var point = this._map.containerPointToLatLng([x, 0]);
+                    var lat = point.lat;
+                    var lng = point.lng;
+                    
+                    var isNight = this._isNight(lat, lng, now);
+                    
+                    if (isNight) {
+                        terminatorPoints.push([x, 0]);
+                        terminatorPoints.push([x, size.y]);
+                    }
+                }
+                
+                if (terminatorPoints.length > 0) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.beginPath();
+                    
+                    for (var i = 0; i < terminatorPoints.length; i += 2) {
+                        var start = terminatorPoints[i];
+                        var end = terminatorPoints[i + 1];
+                        
+                        ctx.moveTo(start[0], start[1]);
+                        ctx.lineTo(end[0], end[1]);
+                    }
+                    
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            },
+            
+            _isNight: function(lat, lng, date) {
+                // Simplified day/night calculation
+                var sunPosition = this._calculateSunPosition(date);
+                var sunLat = sunPosition.lat;
+                var sunLng = sunPosition.lng;
+                
+                // Calculate angle between sun and point
+                var angle = Math.acos(
+                    Math.sin(sunLat * Math.PI / 180) * Math.sin(lat * Math.PI / 180) +
+                    Math.cos(sunLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * 
+                    Math.cos((lng - sunLng) * Math.PI / 180)
+                );
+                
+                return angle > Math.PI / 2;
+            },
+            
+            _calculateSunPosition: function(date) {
+                // Simplified sun position calculation
+                var daysSinceJan1 = (date - new Date(date.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24);
+                var lat = 23.5 * Math.sin(daysSinceJan1 / 365 * 2 * Math.PI);
+                
+                var hours = date.getUTCHours() + date.getUTCMinutes() / 60;
+                var lng = -180 + hours * 15;
+                
+                return { lat: lat, lng: lng };
+            }
+        });
+        
+        L.terminator = function(options) {
+            return new L.Terminator(options);
+        };
+    </script>
+</body>
+</html>
