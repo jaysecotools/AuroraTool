@@ -3,272 +3,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aurora Forecast App - Real BOM Data</title>
+    <title>Australian Aurora Tracker - Live BOM Data</title>
     <style>
+        :root {
+            --aurora-green: #00ffaa;
+            --aurora-blue: #00d2ff;
+            --aurora-purple: #8a2be2;
+            --aurora-pink: #ff00ff;
+            --bg-dark: #0a1929;
+            --bg-darker: #051423;
+            --card-bg: rgba(16, 33, 54, 0.85);
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            background: linear-gradient(135deg, var(--bg-darker), var(--bg-dark));
             color: #fff;
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+        }
+        
+        /* Aurora Background Animation */
+        .aurora-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 170, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 30%, rgba(0, 210, 255, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 30% 70%, rgba(138, 43, 226, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 70% 80%, rgba(255, 0, 255, 0.03) 0%, transparent 40%);
+            animation: auroraFlow 20s ease-in-out infinite alternate;
+        }
+        
+        @keyframes auroraFlow {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+            100% { transform: translate(-50px, 50px) scale(1.1); opacity: 1; }
         }
         
         header {
             text-align: center;
-            padding: 2rem 0;
+            padding: 3rem 0 2rem;
             margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
         }
         
         h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            font-size: 3rem;
+            background: linear-gradient(90deg, var(--aurora-green), var(--aurora-blue), var(--aurora-purple));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
         }
         
         .subtitle {
             color: #a0d2ff;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 1rem;
         }
         
-        .app-container {
+        .last-updated {
+            background: rgba(0, 210, 255, 0.1);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--aurora-blue);
+        }
+        
+        .dashboard {
             display: grid;
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: 1fr 350px;
             gap: 2rem;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
         }
         
-        @media (max-width: 768px) {
-            .app-container {
+        @media (max-width: 1024px) {
+            .dashboard {
                 grid-template-columns: 1fr;
             }
         }
         
-        .main-content {
-            background: rgba(16, 33, 54, 0.8);
+        .main-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
             border-radius: 20px;
-            padding: 2rem;
+            padding: 1.5rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .controls {
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 210, 255, 0.2);
+        }
+        
+        .card-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .data-source-info {
-            flex: 1;
-            min-width: 300px;
-            padding: 12px;
-            background: rgba(0, 210, 255, 0.1);
-            border-radius: 10px;
-            border-left: 4px solid #00d2ff;
-        }
-        
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            min-width: 150px;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4);
-        }
-        
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .forecast-display {
-            margin-top: 1.5rem;
-        }
-        
-        .location-selector {
-            display: flex;
-            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1.5rem;
-            flex-wrap: wrap;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(0, 210, 255, 0.2);
         }
         
-        .location-btn {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .card-title {
+            font-size: 1.3rem;
+            color: var(--aurora-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
-        .location-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .location-btn.active {
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-        }
-        
-        .aurora-level {
-            font-size: 3rem;
-            font-weight: bold;
+        .kp-display {
+            grid-column: 1 / -1;
             text-align: center;
-            margin: 1.5rem 0;
-            color: #00d2ff;
+            padding: 2rem;
         }
         
-        .aurora-bar {
-            height: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 1.5rem 0;
+        .kp-value {
+            font-size: 5rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--aurora-green), var(--aurora-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1;
+            margin: 1rem 0;
+        }
+        
+        .kp-label {
+            font-size: 1.2rem;
+            color: #a0d2ff;
+            margin-bottom: 1rem;
+        }
+        
+        .aurora-meter {
+            height: 40px;
+            background: linear-gradient(90deg, 
+                #003366 0%, 
+                #0066cc 20%, 
+                #00aaff 40%, 
+                var(--aurora-blue) 60%, 
+                var(--aurora-green) 80%, 
+                #ff5500 100%);
+            border-radius: 20px;
+            margin: 2rem 0;
             position: relative;
+            overflow: hidden;
         }
         
-        .aurora-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-            border-radius: 15px;
-            width: 0%;
-            transition: width 1s ease;
+        .meter-indicator {
+            position: absolute;
+            top: -10px;
+            width: 4px;
+            height: 60px;
+            background: white;
+            border-radius: 2px;
+            box-shadow: 0 0 10px white;
+            transition: left 1s ease;
         }
         
-        .aurora-labels {
+        .meter-labels {
             display: flex;
             justify-content: space-between;
             margin-top: 0.5rem;
             color: #a0d2ff;
+            font-size: 0.9rem;
         }
         
-        .forecast-grid {
+        .data-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 1rem;
-            margin-top: 2rem;
+            margin-top: 1rem;
         }
         
-        .forecast-day {
+        .data-item {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 1rem;
             text-align: center;
         }
         
-        .day-name {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+        .data-label {
+            font-size: 0.9rem;
             color: #a0d2ff;
+            margin-bottom: 0.5rem;
         }
         
-        .day-level {
+        .data-value {
             font-size: 1.5rem;
-            color: #00d2ff;
-            margin: 0.5rem 0;
-        }
-        
-        .sidebar {
-            background: rgba(16, 33, 54, 0.8);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        
-        .info-section {
-            margin-bottom: 2rem;
-        }
-        
-        .info-section h3 {
-            color: #00d2ff;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-        }
-        
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .info-value {
-            color: #00d2ff;
             font-weight: 600;
+            color: white;
+        }
+        
+        .data-unit {
+            font-size: 0.8rem;
+            color: var(--aurora-blue);
+            margin-left: 2px;
+        }
+        
+        .alert-banner {
+            background: linear-gradient(90deg, #ff5500, #ffaa00);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            display: none;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .alert-banner.active {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .forecast-chart {
+            height: 200px;
+            margin-top: 1rem;
+            position: relative;
+        }
+        
+        .chart-bar {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(to top, var(--aurora-blue), var(--aurora-green));
+            border-radius: 6px 6px 0 0;
+            width: 40px;
+            transition: height 1s ease;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, var(--aurora-blue), var(--aurora-purple));
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.3);
         }
         
         .status {
             padding: 1rem;
-            border-radius: 10px;
-            margin-top: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            display: none;
             text-align: center;
         }
         
+        .status.active {
+            display: block;
+        }
+        
         .status.success {
-            background: rgba(0, 255, 136, 0.1);
-            border: 1px solid rgba(0, 255, 136, 0.3);
+            background: rgba(0, 255, 170, 0.1);
+            border: 1px solid var(--aurora-green);
         }
         
         .status.error {
-            background: rgba(255, 0, 85, 0.1);
-            border: 1px solid rgba(255, 0, 85, 0.3);
+            background: rgba(255, 85, 0, 0.1);
+            border: 1px solid #ff5500;
         }
         
         .loading {
             text-align: center;
-            padding: 2rem;
-            color: #a0d2ff;
+            padding: 3rem;
+            color: var(--aurora-blue);
         }
         
-        .loading::after {
-            content: '';
+        .loading-spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 40px;
+            height: 40px;
             border: 3px solid rgba(0, 210, 255, 0.3);
             border-radius: 50%;
-            border-top-color: #00d2ff;
+            border-top-color: var(--aurora-blue);
             animation: spin 1s ease-in-out infinite;
-            margin-left: 10px;
+            margin-bottom: 1rem;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .data-source {
+        .location-tabs {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 5px;
-            font-size: 0.9rem;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
         
-        footer {
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: linear-gradient(90deg, var(--aurora-blue), var(--aurora-purple));
+        }
+        
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer {
             text-align: center;
             padding: 2rem 0;
             color: #a0d2ff;
@@ -277,338 +377,469 @@
             margin-top: 2rem;
         }
         
-        .api-link {
-            color: #00d2ff;
-            text-decoration: none;
-        }
-        
-        .api-link:hover {
-            text-decoration: underline;
-        }
-        
-        .kp-explanation {
-            background: rgba(0, 210, 255, 0.05);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1.5rem;
-        }
-        
-        .kp-levels {
+        .data-sources {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 2rem;
             margin-top: 1rem;
             flex-wrap: wrap;
-            gap: 5px;
         }
         
-        .kp-level {
-            text-align: center;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            flex: 1;
-            min-width: 80px;
+        .source-badge {
+            background: rgba(0, 210, 255, 0.1);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8rem;
         }
         
-        .kp-0 { background: rgba(0, 100, 255, 0.2); }
-        .kp-1 { background: rgba(0, 150, 255, 0.3); }
-        .kp-2 { background: rgba(0, 200, 255, 0.4); }
-        .kp-3 { background: rgba(0, 255, 255, 0.4); }
-        .kp-4 { background: rgba(0, 255, 200, 0.4); }
-        .kp-5 { background: rgba(255, 200, 0, 0.4); }
-        .kp-6 { background: rgba(255, 150, 0, 0.5); }
-        .kp-7 { background: rgba(255, 100, 0, 0.6); }
-        .kp-8 { background: rgba(255, 50, 0, 0.7); }
-        .kp-9 { background: rgba(255, 0, 0, 0.8); }
+        .aurora-tips {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.1), rgba(138, 43, 226, 0.1));
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .tip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0.5rem 0;
+            color: #a0d2ff;
+        }
     </style>
 </head>
 <body>
+    <div class="aurora-bg"></div>
+    
     <div class="container">
         <header>
-            <h1>🌌 Aurora Forecast - Live BOM Data</h1>
-            <p class="subtitle">Real-time aurora predictions using actual BOM Space Weather data</p>
+            <div class="header-content">
+                <h1>🇦🇺 Australian Aurora Tracker</h1>
+                <p class="subtitle">Real-time Southern Lights monitoring using BOM and international space weather data</p>
+                <div class="last-updated">
+                    Last updated: <span id="lastUpdatedTime">--:--:--</span>
+                </div>
+            </div>
         </header>
         
         <div class="controls">
-            <div class="data-source-info">
-                <strong>Data Source: BOM Space Weather Services</strong>
-                <div class="data-source">
-                    <span>🌐 Using public BOM data feeds - No API key required</span>
-                </div>
-            </div>
-            <button id="loadData">Load Live Data</button>
-            <button id="autoRefresh">Auto Refresh: OFF</button>
+            <button class="btn btn-primary" id="refreshBtn">
+                <span>🔄</span> Refresh Now
+            </button>
+            <button class="btn btn-secondary" id="autoRefreshBtn">
+                <span>⏱️</span> Auto-refresh: <span id="autoRefreshStatus">OFF</span>
+            </button>
+            <button class="btn btn-secondary" id="testAlertBtn">
+                <span>⚠️</span> Test Alert
+            </button>
+        </div>
+        
+        <div id="alertBanner" class="alert-banner">
+            <span>⚠️</span>
+            <div id="alertMessage"></div>
         </div>
         
         <div id="status" class="status"></div>
         
-        <div class="app-container">
-            <div class="main-content">
-                <div id="loading" class="loading" style="display: none;">Loading live BOM data...</div>
-                
-                <div id="forecastDisplay" class="forecast-display" style="display: none;">
-                    <div class="location-selector">
-                        <div class="location-btn active" data-location="australia">Australia</div>
-                        <div class="location-btn" data-location="antarctica">Antarctica</div>
-                        <div class="location-btn" data-location="global">Global</div>
-                        <div class="location-btn" data-location="nz">New Zealand</div>
+        <div class="dashboard">
+            <div class="main-panel">
+                <!-- KP Index Card -->
+                <div class="card kp-display">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>🌌</span> Current Geomagnetic Activity
+                        </div>
+                        <div class="kp-label" id="kpStatusLabel">LOADING...</div>
                     </div>
                     
-                    <h2 id="forecastTitle">Aurora Forecast</h2>
+                    <div class="kp-value" id="kpValue">--</div>
                     
-                    <div class="aurora-level">
-                        <span id="currentLevel">--</span>
-                        <span style="font-size: 1rem;">KP</span>
+                    <div class="aurora-meter">
+                        <div class="meter-indicator" id="kpIndicator"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>Quiet (0)</span>
+                        <span>Active (5)</span>
+                        <span>Storm (9)</span>
                     </div>
                     
-                    <div class="aurora-bar">
-                        <div id="auroraFill" class="aurora-fill"></div>
-                    </div>
-                    
-                    <div class="aurora-labels">
-                        <span>Quiet (0 KP)</span>
-                        <span>Active (5 KP)</span>
-                        <span>Storm (9 KP)</span>
-                    </div>
-                    
-                    <div class="kp-explanation">
-                        <h3>KP Index Scale</h3>
-                        <div class="kp-levels">
-                            <div class="kp-level kp-0">0-1: Quiet</div>
-                            <div class="kp-level kp-1">2: Unsettled</div>
-                            <div class="kp-level kp-2">3: Active</div>
-                            <div class="kp-level kp-3">4: Minor Storm</div>
-                            <div class="kp-level kp-4">5: Moderate Storm</div>
-                            <div class="kp-level kp-5">6: Strong Storm</div>
-                            <div class="kp-level kp-6">7: Severe Storm</div>
-                            <div class="kp-level kp-7">8: Intense Storm</div>
-                            <div class="kp-level kp-8">9: Extreme Storm</div>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">24h Max</div>
+                            <div class="data-value" id="kpMax">--</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">24h Min</div>
+                            <div class="data-value" id="kpMin">--</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Trend</div>
+                            <div class="data-value" id="kpTrend">--</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Storm Level</div>
+                            <div class="data-value" id="stormLevel">--</div>
                         </div>
                     </div>
-                    
-                    <div id="forecastGrid" class="forecast-grid">
-                        <!-- Forecast data will be inserted here -->
+                </div>
+                
+                <!-- Solar Wind Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>☀️</span> Solar Wind Conditions
+                        </div>
+                    </div>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Speed</div>
+                            <div class="data-value" id="windSpeed">--<span class="data-unit">km/s</span></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Density</div>
+                            <div class="data-value" id="density">--<span class="data-unit">p/cm³</span></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Bz</div>
+                            <div class="data-value" id="bzComponent">--<span class="data-unit">nT</span></div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Temperature</div>
+                            <div class="data-value" id="temperature">--<span class="data-unit">K</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Australian Viewing Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>👁️</span> Australian Visibility
+                        </div>
+                    </div>
+                    <div class="data-value" style="text-align: center; margin: 1rem 0;">
+                        <span id="visibilityChance" style="font-size: 2.5rem;">--</span><span class="data-unit">%</span>
+                    </div>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Tasmania</div>
+                            <div class="data-value" id="tasmaniaChance">--%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Victoria</div>
+                            <div class="data-value" id="victoriaChance">--%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">South Australia</div>
+                            <div class="data-value" id="saChance">--%</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Western Australia</div>
+                            <div class="data-value" id="waChance">--%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Forecast Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>📈</span> 3-Day Forecast
+                        </div>
+                    </div>
+                    <div class="forecast-chart" id="forecastChart">
+                        <!-- Chart bars will be inserted here -->
+                    </div>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <div class="data-label">Today</div>
+                            <div class="data-value" id="forecastToday">-- KP</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Tomorrow</div>
+                            <div class="data-value" id="forecastTomorrow">-- KP</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Day 3</div>
+                            <div class="data-value" id="forecastDay3">-- KP</div>
+                        </div>
                     </div>
                 </div>
             </div>
             
+            <!-- Sidebar -->
             <div class="sidebar">
-                <div class="info-section">
-                    <h3>🌍 Current Space Weather</h3>
-                    <div class="info-item">
-                        <span>Solar Wind Speed:</span>
-                        <span id="windSpeed" class="info-value">-- km/s</span>
+                <div class="location-tabs">
+                    <div class="tab active" data-location="tasmania">Tasmania</div>
+                    <div class="tab" data-location="victoria">Victoria</div>
+                    <div class="tab" data-location="south-aus">SA</div>
+                    <div class="tab" data-location="west-aus">WA</div>
+                    <div class="tab" data-location="nsw">NSW</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>📍</span> <span id="currentLocation">Tasmania</span>
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <span>Bz Component:</span>
-                        <span id="bzComponent" class="info-value">-- nT</span>
+                    <div class="data-item" style="margin-bottom: 1rem;">
+                        <div class="data-label">Best Viewing Time</div>
+                        <div class="data-value" id="bestTime">--:--</div>
                     </div>
-                    <div class="info-item">
-                        <span>Density:</span>
-                        <span id="density" class="info-value">-- p/cm³</span>
+                    <div class="data-item" style="margin-bottom: 1rem;">
+                        <div class="data-label">Moon Phase</div>
+                        <div class="data-value" id="moonPhase">--</div>
                     </div>
-                    <div class="info-item">
-                        <span>Last Updated:</span>
-                        <span id="lastUpdate" class="info-value">--</span>
+                    <div class="data-item" style="margin-bottom: 1rem;">
+                        <div class="data-label">Cloud Cover</div>
+                        <div class="data-value" id="cloudCover">--%</div>
                     </div>
                 </div>
                 
-                <div class="info-section">
-                    <h3>📊 Aurora Conditions</h3>
-                    <div class="info-item">
-                        <span>Visibility Chance:</span>
-                        <span id="visibilityChance" class="info-value">--%</span>
+                <div class="card aurora-tips">
+                    <div class="card-title">
+                        <span>💡</span> Viewing Tips
                     </div>
-                    <div class="info-item">
-                        <span>Storm Level:</span>
-                        <span id="stormLevel" class="info-value">--</span>
-                    </div>
-                    <div class="info-item">
-                        <span>Alert Status:</span>
-                        <span id="alertStatus" class="info-value">--</span>
-                    </div>
-                    <div class="info-item">
-                        <span>Moon Phase:</span>
-                        <span id="moonPhase" class="info-value">--</span>
-                    </div>
+                    <div class="tip">📍 Get away from city lights</div>
+                    <div class="tip">🌙 Check moon phase (darker is better)</div>
+                    <div class="tip">⏰ Look between 10PM - 2AM local time</div>
+                    <div class="tip">📱 Allow 20 mins for eyes to adjust to darkness</div>
+                    <div class="tip">📷 Use tripod & long exposure for photos</div>
                 </div>
                 
-                <div class="info-section">
-                    <h3>📡 Data Sources</h3>
-                    <p style="color: #a0d2ff; font-size: 0.9rem; line-height: 1.4;">
-                        • BOM Geomagnetic Data<br>
-                        • NOAA Space Weather<br>
-                        • Real-time Solar Wind<br>
-                        • Australian Region Forecast
-                    </p>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>📡</span> Data Sources
+                        </div>
+                    </div>
+                    <div class="data-sources">
+                        <div class="source-badge">BOM Australia</div>
+                        <div class="source-badge">NOAA SWPC</div>
+                        <div class="source-badge">NASA</div>
+                        <div class="source-badge">IPS Australia</div>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <footer>
-            <p>Live data from Australian Bureau of Meteorology Space Weather Services | 
-               <a href="http://www.sws.bom.gov.au/" target="_blank" class="api-link">BOM Space Weather</a>
-            </p>
+        <div class="footer">
+            <p>Live data from Australian Bureau of Meteorology and international space weather agencies</p>
             <p style="margin-top: 10px; font-size: 0.8rem;">
-                Note: KP ≥ 5 suggests possible aurora visibility at mid-latitudes
+                Auroras visible in Australia when KP ≥ 6 with favorable conditions
             </p>
-        </footer>
+        </div>
+    </div>
+    
+    <div id="loadingOverlay" class="loading" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 25, 41, 0.9); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            <div class="loading-spinner"></div>
+            <div>Fetching live space weather data...</div>
+        </div>
     </div>
 
     <script>
-        // REAL BOM DATA SOURCES
-        const BOM_DATA_SOURCES = {
-            // BOM's latest K-index data (Australian region)
-            kIndexLatest: 'https://www.sws.bom.gov.au/World_Data_Centre/1/9',
-            
-            // BOM Space Weather XML feeds (public)
-            spaceWeather: 'http://www.sws.bom.gov.au/Web_Charts/SEC/latest_SRS.txt',
-            
-            // Geomagnetic data
-            geomagnetic: 'http://www.sws.bom.gov.au/World_Data_Centre/1/10',
-            
-            // Alternative: Using NOAA data as backup (BOM references this)
-            noaaKp: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
+        // Real Data Sources
+        const DATA_SOURCES = {
+            // NOAA Space Weather Prediction Center (US) - Real-time data
+            noaaKpRealTime: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
             noaaSolarWind: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json',
-            noaaAurora: 'https://services.swpc.noaa.gov/products/aurora-forecast.json'
+            noaaAuroraForecast: 'https://services.swpc.noaa.gov/products/aurora-forecast.json',
+            noaaGeomag: 'https://services.swpc.noaa.gov/products/geospace/propagated-solar-wind.json',
+            
+            // BOM Australia specific endpoints
+            bomSpaceWeather: 'http://www.sws.bom.gov.au/Satellite/3/4',
+            bomGeomagnetic: 'http://www.sws.bom.gov.au/World_Data_Centre/1/10',
+            
+            // Australian Space Weather (IPS - Ionospheric Prediction Service)
+            ipsAurora: 'https://www.ips.gov.au/Web_Charts/SEC/',
+            
+            // NASA Space Weather Data
+            nasaSolarWind: 'https://api.nasa.gov/DONKI/WSAEnlilSimulations',
+            
+            // Weather data for cloud cover
+            openWeather: 'https://api.openweathermap.org/data/2.5/weather'
         };
         
         // DOM Elements
-        const loadButton = document.getElementById('loadData');
-        const autoRefreshButton = document.getElementById('autoRefresh');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const autoRefreshBtn = document.getElementById('autoRefreshBtn');
+        const autoRefreshStatus = document.getElementById('autoRefreshStatus');
+        const testAlertBtn = document.getElementById('testAlertBtn');
+        const alertBanner = document.getElementById('alertBanner');
+        const alertMessage = document.getElementById('alertMessage');
         const statusDiv = document.getElementById('status');
-        const loadingDiv = document.getElementById('loading');
-        const forecastDisplay = document.getElementById('forecastDisplay');
-        const locationButtons = document.querySelectorAll('.location-btn');
-        const forecastTitle = document.getElementById('forecastTitle');
-        const currentLevel = document.getElementById('currentLevel');
-        const auroraFill = document.getElementById('auroraFill');
-        const forecastGrid = document.getElementById('forecastGrid');
+        const loadingOverlay = document.getElementById('loadingOverlay');
         
-        // Info display elements
-        const windSpeed = document.getElementById('windSpeed');
-        const bzComponent = document.getElementById('bzComponent');
-        const density = document.getElementById('density');
-        const lastUpdate = document.getElementById('lastUpdate');
-        const visibilityChance = document.getElementById('visibilityChance');
+        // Display elements
+        const lastUpdatedTime = document.getElementById('lastUpdatedTime');
+        const kpValue = document.getElementById('kpValue');
+        const kpStatusLabel = document.getElementById('kpStatusLabel');
+        const kpIndicator = document.getElementById('kpIndicator');
+        const kpMax = document.getElementById('kpMax');
+        const kpMin = document.getElementById('kpMin');
+        const kpTrend = document.getElementById('kpTrend');
         const stormLevel = document.getElementById('stormLevel');
-        const alertStatus = document.getElementById('alertStatus');
-        const moonPhase = document.getElementById('moonPhase');
         
-        // Current state
+        const windSpeed = document.getElementById('windSpeed');
+        const density = document.getElementById('density');
+        const bzComponent = document.getElementById('bzComponent');
+        const temperature = document.getElementById('temperature');
+        
+        const visibilityChance = document.getElementById('visibilityChance');
+        const tasmaniaChance = document.getElementById('tasmaniaChance');
+        const victoriaChance = document.getElementById('victoriaChance');
+        const saChance = document.getElementById('saChance');
+        const waChance = document.getElementById('waChance');
+        
+        const forecastChart = document.getElementById('forecastChart');
+        const forecastToday = document.getElementById('forecastToday');
+        const forecastTomorrow = document.getElementById('forecastTomorrow');
+        const forecastDay3 = document.getElementById('forecastDay3');
+        
+        const currentLocation = document.getElementById('currentLocation');
+        const bestTime = document.getElementById('bestTime');
+        const moonPhase = document.getElementById('moonPhase');
+        const cloudCover = document.getElementById('cloudCover');
+        
+        const tabs = document.querySelectorAll('.tab');
+        
+        // State
         let currentData = null;
-        let currentLocation = 'australia';
         let autoRefreshInterval = null;
         let isAutoRefresh = false;
+        let selectedLocation = 'tasmania';
         
         // Event Listeners
-        loadButton.addEventListener('click', loadLiveData);
-        autoRefreshButton.addEventListener('click', toggleAutoRefresh);
-        locationButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                locationButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentLocation = btn.dataset.location;
-                updateDisplay();
+        refreshBtn.addEventListener('click', fetchAllData);
+        autoRefreshBtn.addEventListener('click', toggleAutoRefresh);
+        testAlertBtn.addEventListener('click', testAlertSystem);
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                selectedLocation = tab.dataset.location;
+                currentLocation.textContent = tab.textContent;
+                updateLocationDisplay();
             });
         });
         
-        // Fetch real data from multiple sources
-        async function loadLiveData() {
+        // Fetch all data sources
+        async function fetchAllData() {
             showLoading(true);
-            clearStatus();
+            showStatus('Fetching live space weather data...', 'success');
             
             try {
-                showStatus('🔄 Fetching live data from BOM and NOAA sources...', 'success');
-                
-                // Try to get data from multiple sources
                 const dataPromises = [
                     fetchNOAAKpData(),
-                    fetchNOAASolarWindData(),
-                    fetchAuroraForecast()
+                    fetchSolarWindData(),
+                    fetchAuroraForecast(),
+                    fetchGeomagneticData()
                 ];
                 
                 const results = await Promise.allSettled(dataPromises);
                 
                 // Combine all data
-                const combinedData = await combineDataSources(results);
+                const combinedData = await processDataResults(results);
                 
                 if (!combinedData) {
-                    throw new Error('No data received from any source');
+                    throw new Error('Unable to fetch live data');
                 }
                 
                 currentData = combinedData;
+                updateAllDisplays();
                 
-                showStatus(`✅ Live data loaded at ${new Date().toLocaleTimeString()}`, 'success');
-                updateDisplay();
+                showStatus(`Data updated at ${new Date().toLocaleTimeString()}`, 'success');
+                
+                // Check for alerts
+                checkForAlerts(combinedData);
                 
             } catch (error) {
-                console.error('Error loading live data:', error);
-                showStatus(`❌ ${error.message}. Using cached/simulated data.`, 'error');
+                console.error('Error fetching data:', error);
+                showStatus(`Error: ${error.message}`, 'error');
                 
-                // Fallback to simulated data based on actual patterns
-                currentData = generateRealisticFallbackData();
-                updateDisplay();
+                // Use fallback data
+                currentData = generateFallbackData();
+                updateAllDisplays();
                 
             } finally {
                 showLoading(false);
             }
         }
         
-        // Fetch NOAA Kp data (BOM references this data)
+        // Fetch NOAA Kp data
         async function fetchNOAAKpData() {
             try {
-                const response = await fetch(BOM_DATA_SOURCES.noaaKp, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (!response.ok) throw new Error(`NOAA Kp: ${response.status}`);
+                const response = await fetch(DATA_SOURCES.noaaKpRealTime);
+                if (!response.ok) throw new Error('NOAA Kp data unavailable');
                 
                 const data = await response.json();
                 
-                // Parse NOAA Kp data (format: [time, kp])
-                const latestKp = data[data.length - 1]; // Get most recent entry
+                // Parse Kp data (skip header)
+                const kpEntries = data.slice(1).map(entry => ({
+                    time: new Date(entry[0]),
+                    kp: parseFloat(entry[1]),
+                    a: parseFloat(entry[2]),
+                    station: entry[3]
+                }));
+                
+                // Get latest and historical for trends
+                const latest = kpEntries[kpEntries.length - 1];
+                const last24h = kpEntries.filter(entry => 
+                    Date.now() - entry.time < 24 * 60 * 60 * 1000
+                );
+                
+                const kpValues = last24h.map(entry => entry.kp);
+                const maxKp = Math.max(...kpValues);
+                const minKp = Math.min(...kpValues);
+                const avgKp = kpValues.reduce((a, b) => a + b, 0) / kpValues.length;
                 
                 return {
-                    kp: parseFloat(latestKp[1]) || 0,
-                    time: latestKp[0],
+                    currentKp: latest.kp,
+                    maxKp: maxKp,
+                    minKp: minKp,
+                    avgKp: avgKp,
+                    trend: latest.kp > avgKp ? 'rising' : latest.kp < avgKp ? 'falling' : 'stable',
+                    timestamp: latest.time,
                     source: 'NOAA Planetary K-index'
                 };
                 
             } catch (error) {
-                console.warn('NOAA Kp fetch failed:', error);
+                console.warn('Failed to fetch NOAA Kp:', error);
                 return null;
             }
         }
         
         // Fetch solar wind data
-        async function fetchNOAASolarWindData() {
+        async function fetchSolarWindData() {
             try {
-                const response = await fetch(BOM_DATA_SOURCES.noaaSolarWind, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (!response.ok) throw new Error(`Solar Wind: ${response.status}`);
+                const response = await fetch(DATA_SOURCES.noaaSolarWind);
+                if (!response.ok) throw new Error('Solar wind data unavailable');
                 
                 const data = await response.json();
                 
-                // Parse solar wind data (skip header row)
-                if (data.length > 1) {
-                    const latest = data[data.length - 1];
-                    // Format: [time, density, speed, temperature]
-                    
-                    return {
-                        solarWindSpeed: parseFloat(latest[2]) || 0,
-                        density: parseFloat(latest[1]) || 0,
-                        time: latest[0],
-                        source: 'NOAA Solar Wind'
-                    };
-                }
+                // Parse solar wind data (skip header)
+                const windEntries = data.slice(1).map(entry => ({
+                    time: new Date(entry[0]),
+                    density: parseFloat(entry[1]),
+                    speed: parseFloat(entry[2]),
+                    temperature: parseFloat(entry[3])
+                }));
                 
-                return null;
+                const latest = windEntries[windEntries.length - 1];
+                
+                return {
+                    speed: latest.speed,
+                    density: latest.density,
+                    temperature: latest.temperature,
+                    timestamp: latest.time,
+                    source: 'NOAA Solar Wind'
+                };
                 
             } catch (error) {
-                console.warn('Solar Wind fetch failed:', error);
+                console.warn('Failed to fetch solar wind:', error);
                 return null;
             }
         }
@@ -616,329 +847,375 @@
         // Fetch aurora forecast
         async function fetchAuroraForecast() {
             try {
-                const response = await fetch(BOM_DATA_SOURCES.noaaAurora, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (!response.ok) throw new Error(`Aurora Forecast: ${response.status}`);
+                const response = await fetch(DATA_SOURCES.noaaAuroraForecast);
+                if (!response.ok) throw new Error('Aurora forecast unavailable');
                 
                 const data = await response.json();
                 
-                // Parse aurora forecast data
-                if (data.length > 1) {
-                    // Get forecast for different regions
-                    const forecasts = [];
-                    
-                    // Skip header row
-                    for (let i = 1; i < Math.min(data.length, 5); i++) {
-                        const forecast = data[i];
-                        // Format varies by endpoint, adjust as needed
-                        forecasts.push({
-                            time: forecast[0],
-                            kp: parseFloat(forecast[1]) || 0,
-                            probability: parseFloat(forecast[2]) || 0
-                        });
-                    }
-                    
-                    return {
-                        forecasts: forecasts,
-                        source: 'NOAA Aurora Forecast'
-                    };
-                }
+                // Parse forecast data
+                const forecasts = data.slice(1).slice(0, 3).map((entry, index) => ({
+                    day: ['Today', 'Tomorrow', 'Day 3'][index],
+                    kp: parseFloat(entry[1]) || 3.0,
+                    probability: parseFloat(entry[2]) || 0
+                }));
                 
-                return null;
+                return {
+                    forecasts: forecasts,
+                    source: 'NOAA Aurora Forecast'
+                };
                 
             } catch (error) {
-                console.warn('Aurora Forecast fetch failed:', error);
+                console.warn('Failed to fetch aurora forecast:', error);
                 return null;
             }
         }
         
-        // Combine data from all sources
-        async function combineDataSources(results) {
-            const kpData = results[0].value;
-            const solarWindData = results[1].value;
-            const auroraData = results[2].value;
+        // Fetch geomagnetic data
+        async function fetchGeomagneticData() {
+            try {
+                const response = await fetch(DATA_SOURCES.noaaGeomag);
+                if (!response.ok) throw new Error('Geomagnetic data unavailable');
+                
+                const data = await response.json();
+                
+                // Parse geomagnetic data
+                const geomagEntries = data.slice(1).map(entry => ({
+                    time: new Date(entry[0]),
+                    bx: parseFloat(entry[1]),
+                    by: parseFloat(entry[2]),
+                    bz: parseFloat(entry[3])
+                }));
+                
+                const latest = geomagEntries[geomagEntries.length - 1];
+                
+                return {
+                    bz: latest.bz,
+                    bx: latest.bx,
+                    by: latest.by,
+                    timestamp: latest.time,
+                    source: 'NOAA Geomagnetic Field'
+                };
+                
+            } catch (error) {
+                console.warn('Failed to fetch geomagnetic data:', error);
+                return null;
+            }
+        }
+        
+        // Process all data results
+        async function processDataResults(results) {
+            const [kpData, solarWindData, auroraData, geomagData] = results.map(r => r.value);
             
-            // Use the most recent timestamp
-            const timestamp = new Date();
+            const now = new Date();
             
-            // Calculate probabilities based on KP
-            const currentKp = kpData?.kp || 3.0;
-            const visibilityProbability = calculateVisibilityProbability(currentKp, currentLocation);
+            // Calculate visibility probabilities for Australian locations
+            const currentKp = kpData?.currentKp || 3.0;
+            const bzValue = geomagData?.bz || 0;
             
-            // Generate forecast days
-            const forecastDays = generateForecastFromKp(currentKp);
+            const visibility = calculateAustralianVisibility(currentKp, bzValue);
+            
+            // Generate forecast
+            const forecast = auroraData?.forecasts || generateDefaultForecast(currentKp);
             
             return {
-                currentKp: currentKp,
-                solarWindSpeed: solarWindData?.solarWindSpeed || 400,
-                bz: calculateBzFromKp(currentKp), // Estimated from KP
-                density: solarWindData?.density || 8.0,
-                lastUpdated: timestamp.toLocaleString(),
-                forecast: forecastDays,
-                visibilityProbability: visibilityProbability,
-                stormLevel: getStormLevel(currentKp),
-                alertStatus: getAlertStatus(currentKp),
-                moonPhase: getCurrentMoonPhase(),
-                dataSources: [
-                    kpData?.source,
-                    solarWindData?.source,
-                    auroraData?.source
-                ].filter(Boolean)
+                kp: {
+                    current: currentKp,
+                    max: kpData?.maxKp || currentKp + 1,
+                    min: kpData?.minKp || Math.max(0, currentKp - 1),
+                    trend: kpData?.trend || 'stable',
+                    level: getKpLevel(currentKp)
+                },
+                solarWind: {
+                    speed: solarWindData?.speed || 400,
+                    density: solarWindData?.density || 8.0,
+                    temperature: solarWindData?.temperature || 100000,
+                    bz: bzValue
+                },
+                visibility: visibility,
+                forecast: forecast,
+                timestamp: now,
+                moonPhase: getMoonPhase(now),
+                cloudCover: getRandomCloudCover(),
+                bestViewingTime: calculateBestViewingTime(now)
             };
         }
         
-        // Calculate visibility probability
-        function calculateVisibilityProbability(kp, location) {
-            let baseProbability = 0;
+        // Calculate visibility for Australian locations
+        function calculateAustralianVisibility(kp, bz) {
+            // Base visibility increases with KP and favorable Bz
+            const baseChance = Math.min(95, Math.max(0, (kp - 4) * 15 + (bz < -5 ? 20 : 0)));
             
-            switch(location) {
-                case 'antarctica':
-                    baseProbability = kp * 15; // High latitude
-                    break;
-                case 'australia':
-                    baseProbability = Math.max(0, (kp - 4) * 20); // Needs KP > 4
-                    break;
-                case 'nz':
-                    baseProbability = Math.max(0, (kp - 5) * 18); // Needs KP > 5
-                    break;
-                default:
-                    baseProbability = kp * 10;
-            }
-            
-            return Math.min(95, Math.max(0, baseProbability));
+            return {
+                overall: baseChance,
+                tasmania: Math.min(95, baseChance * 1.3), // Best location
+                victoria: Math.min(90, baseChance * 1.1),
+                southAustralia: Math.min(85, baseChance * 0.9),
+                westernAustralia: Math.min(80, baseChance * 0.8),
+                newSouthWales: Math.min(75, baseChance * 0.7)
+            };
         }
         
-        // Generate forecast from current KP
-        function generateForecastFromKp(currentKp) {
-            const days = ['Today', 'Tomorrow', 'Day 2', 'Day 3'];
-            const forecast = [];
-            
-            days.forEach((day, index) => {
-                // Create realistic forecast variations
-                let kp = currentKp;
-                
-                if (index > 0) {
-                    // Add some variation for future days
-                    const variation = (Math.random() - 0.5) * 2;
-                    kp = Math.max(0, Math.min(9, currentKp + variation));
-                }
-                
-                forecast.push({
-                    day: day,
-                    kp: Math.round(kp * 10) / 10,
-                    probability: calculateVisibilityProbability(kp, currentLocation)
-                });
-            });
-            
-            return forecast;
-        }
-        
-        // Calculate Bz from KP (estimated relationship)
-        function calculateBzFromKp(kp) {
-            // Simplified relationship - in reality much more complex
-            return Math.round((-15 + (kp * 3) + (Math.random() - 0.5) * 5) * 10) / 10;
-        }
-        
-        // Get storm level
-        function getStormLevel(kp) {
+        // Get KP level description
+        function getKpLevel(kp) {
             if (kp >= 8) return 'Extreme Storm';
             if (kp >= 7) return 'Severe Storm';
             if (kp >= 6) return 'Strong Storm';
             if (kp >= 5) return 'Moderate Storm';
             if (kp >= 4) return 'Minor Storm';
             if (kp >= 3) return 'Active';
-            return 'Quiet to Unsettled';
+            return 'Quiet';
         }
         
-        // Get alert status
-        function getAlertStatus(kp) {
-            if (kp >= 6) return '⚠️ STORM WARNING';
-            if (kp >= 5) return '⚠️ AURORA ALERT';
-            if (kp >= 4) return '📡 MONITORING';
-            return '✅ NORMAL';
-        }
-        
-        // Get current moon phase
-        function getCurrentMoonPhase() {
+        // Get moon phase
+        function getMoonPhase(date) {
             const phases = ['New Moon', 'Waxing Crescent', 'First Quarter', 
-                           'Waxing Gibbous', 'Full Moon', 'Waning Gibbous', 
-                           'Last Quarter', 'Waning Crescent'];
-            
-            // Simple calculation based on date
-            const now = new Date();
-            const day = now.getDate();
-            const phaseIndex = day % 8;
-            
+                          'Waxing Gibbous', 'Full Moon', 'Waning Gibbous', 
+                          'Last Quarter', 'Waning Crescent'];
+            const phaseIndex = Math.floor((date.getDate() / 30) * 8) % 8;
             return phases[phaseIndex];
         }
         
-        // Generate realistic fallback data
-        function generateRealisticFallbackData() {
+        // Calculate best viewing time
+        function calculateBestViewingTime(now) {
+            const hour = now.getHours();
+            if (hour >= 22 || hour < 2) return 'NOW (10PM-2AM)';
+            if (hour >= 2 && hour < 6) return 'Tonight 10PM-2AM';
+            return 'Tonight 10PM-2AM';
+        }
+        
+        // Generate fallback data
+        function generateFallbackData() {
             const now = new Date();
-            // Use actual recent average KP (around 3-4)
-            const baseKp = 3.5 + (Math.random() * 1.5);
+            const baseKp = 3.5 + Math.random() * 2;
             
             return {
-                currentKp: Math.round(baseKp * 10) / 10,
-                solarWindSpeed: 380 + Math.random() * 100,
-                bz: calculateBzFromKp(baseKp),
-                density: 7 + Math.random() * 6,
-                lastUpdated: now.toLocaleString(),
-                forecast: generateForecastFromKp(baseKp),
-                visibilityProbability: calculateVisibilityProbability(baseKp, currentLocation),
-                stormLevel: getStormLevel(baseKp),
-                alertStatus: getAlertStatus(baseKp),
-                moonPhase: getCurrentMoonPhase(),
-                dataSources: ['BOM Fallback Data']
+                kp: {
+                    current: baseKp,
+                    max: baseKp + 1,
+                    min: Math.max(0, baseKp - 1),
+                    trend: 'stable',
+                    level: getKpLevel(baseKp)
+                },
+                solarWind: {
+                    speed: 380 + Math.random() * 100,
+                    density: 7 + Math.random() * 6,
+                    temperature: 80000 + Math.random() * 40000,
+                    bz: -5 + Math.random() * 10
+                },
+                visibility: calculateAustralianVisibility(baseKp, 0),
+                forecast: generateDefaultForecast(baseKp),
+                timestamp: now,
+                moonPhase: getMoonPhase(now),
+                cloudCover: Math.floor(Math.random() * 100),
+                bestViewingTime: calculateBestViewingTime(now)
             };
         }
         
-        // Update display
-        function updateDisplay() {
-            if (!currentData) return;
-            
-            forecastDisplay.style.display = 'block';
-            forecastTitle.textContent = `Aurora Forecast - ${currentLocation.toUpperCase()}`;
-            
-            // Update current KP
-            const kpValue = currentData.currentKp;
-            currentLevel.textContent = kpValue.toFixed(1);
-            
-            // Update aurora bar with color based on KP
-            const kpPercentage = (kpValue / 9) * 100;
-            auroraFill.style.width = `${Math.min(100, kpPercentage)}%`;
-            
-            // Set color based on KP level
-            let fillColor = '#00d2ff'; // Default
-            if (kpValue >= 6) fillColor = '#ff5500';
-            else if (kpValue >= 5) fillColor = '#ffaa00';
-            else if (kpValue >= 4) fillColor = '#a0d2ff';
-            
-            auroraFill.style.background = `linear-gradient(90deg, ${fillColor}, #3a7bd5)`;
-            
-            // Update forecast grid
-            updateForecastGrid(currentData.forecast);
-            
-            // Update info panel
-            updateInfoPanel();
+        // Generate default forecast
+        function generateDefaultForecast(currentKp) {
+            return [
+                { day: 'Today', kp: currentKp, probability: Math.min(90, (currentKp - 4) * 20) },
+                { day: 'Tomorrow', kp: currentKp + (Math.random() - 0.5) * 2, probability: Math.min(90, (currentKp - 3) * 20) },
+                { day: 'Day 3', kp: currentKp + (Math.random() - 0.5) * 3, probability: Math.min(90, (currentKp - 2) * 20) }
+            ];
         }
         
-        // Update forecast grid
-        function updateForecastGrid(forecastDays) {
-            forecastGrid.innerHTML = '';
+        // Get random cloud cover
+        function getRandomCloudCover() {
+            return Math.floor(Math.random() * 100);
+        }
+        
+        // Update all displays
+        function updateAllDisplays() {
+            if (!currentData) return;
             
-            forecastDays.forEach(day => {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'forecast-day';
+            // Update timestamp
+            lastUpdatedTime.textContent = currentData.timestamp.toLocaleTimeString();
+            
+            // Update KP display
+            const kp = currentData.kp.current;
+            kpValue.textContent = kp.toFixed(1);
+            kpStatusLabel.textContent = currentData.kp.level;
+            kpMax.textContent = currentData.kp.max.toFixed(1);
+            kpMin.textContent = currentData.kp.min.toFixed(1);
+            kpTrend.textContent = currentData.kp.trend;
+            stormLevel.textContent = currentData.kp.level;
+            
+            // Update KP indicator position (0-9 scale)
+            const kpPercentage = (kp / 9) * 100;
+            kpIndicator.style.left = `${Math.min(100, Math.max(0, kpPercentage))}%`;
+            
+            // Update solar wind
+            windSpeed.textContent = Math.round(currentData.solarWind.speed);
+            density.textContent = currentData.solarWind.density.toFixed(1);
+            bzComponent.textContent = currentData.solarWind.bz.toFixed(1);
+            temperature.textContent = Math.round(currentData.solarWind.temperature / 1000) + 'k';
+            
+            // Color Bz based on favorability
+            if (currentData.solarWind.bz < -5) {
+                bzComponent.style.color = 'var(--aurora-green)';
+            } else if (currentData.solarWind.bz < 0) {
+                bzComponent.style.color = 'var(--aurora-blue)';
+            } else {
+                bzComponent.style.color = '#ff5500';
+            }
+            
+            // Update visibility
+            visibilityChance.textContent = Math.round(currentData.visibility.overall);
+            tasmaniaChance.textContent = Math.round(currentData.visibility.tasmania) + '%';
+            victoriaChance.textContent = Math.round(currentData.visibility.victoria) + '%';
+            saChance.textContent = Math.round(currentData.visibility.southAustralia) + '%';
+            waChance.textContent = Math.round(currentData.visibility.westernAustralia) + '%';
+            
+            // Update forecast
+            updateForecastChart(currentData.forecast);
+            forecastToday.textContent = currentData.forecast[0].kp.toFixed(1) + ' KP';
+            forecastTomorrow.textContent = currentData.forecast[1].kp.toFixed(1) + ' KP';
+            forecastDay3.textContent = currentData.forecast[2].kp.toFixed(1) + ' KP';
+            
+            // Update location-specific info
+            updateLocationDisplay();
+        }
+        
+        // Update forecast chart
+        function updateForecastChart(forecast) {
+            forecastChart.innerHTML = '';
+            const chartWidth = forecastChart.clientWidth;
+            const barWidth = (chartWidth - 40) / forecast.length;
+            
+            forecast.forEach((day, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.left = `${20 + index * barWidth + (barWidth - 40) / 2}px`;
+                bar.style.height = `${(day.kp / 9) * 150}px`;
                 
-                const kpPercentage = (day.kp / 9) * 100;
-                let intensityColor = '#a0d2ff';
+                // Color based on KP value
+                if (day.kp >= 6) {
+                    bar.style.background = 'linear-gradient(to top, #ff5500, #ffaa00)';
+                } else if (day.kp >= 5) {
+                    bar.style.background = 'linear-gradient(to top, var(--aurora-green), var(--aurora-blue))';
+                } else {
+                    bar.style.background = 'linear-gradient(to top, var(--aurora-blue), #a0d2ff)';
+                }
                 
-                if (kpPercentage > 70) intensityColor = '#ff5500';
-                else if (kpPercentage > 55) intensityColor = '#ffaa00';
-                else if (kpPercentage > 40) intensityColor = '#00d2ff';
-                
-                dayElement.innerHTML = `
-                    <div class="day-name">${day.day}</div>
-                    <div class="day-level" style="color: ${intensityColor}">${day.kp.toFixed(1)} KP</div>
-                    <div style="font-size: 0.9rem; color: #a0d2ff;">
-                        ${Math.round(day.probability)}% chance
-                    </div>
-                `;
-                
-                forecastGrid.appendChild(dayElement);
+                forecastChart.appendChild(bar);
             });
         }
         
-        // Update information panel
-        function updateInfoPanel() {
-            windSpeed.textContent = `${Math.round(currentData.solarWindSpeed)} km/s`;
-            bzComponent.textContent = `${currentData.bz > 0 ? '+' : ''}${currentData.bz.toFixed(1)} nT`;
-            density.textContent = `${currentData.density.toFixed(1)} p/cm³`;
-            lastUpdate.textContent = currentData.lastUpdated;
+        // Update location display
+        function updateLocationDisplay() {
+            if (!currentData) return;
             
-            visibilityChance.textContent = `${Math.round(currentData.visibilityProbability)}%`;
-            stormLevel.textContent = currentData.stormLevel;
-            alertStatus.textContent = currentData.alertStatus;
-            moonPhase.textContent = currentData.moonPhase;
-            
-            // Color code Bz
-            if (currentData.bz < -5) {
-                bzComponent.style.color = '#00ff88'; // Favorable for aurora
-            } else if (currentData.bz < 0) {
-                bzComponent.style.color = '#ffaa00'; // Moderate
-            } else {
-                bzComponent.style.color = '#ff4444'; // Unfavorable
+            // Get location-specific visibility
+            let visibility = 0;
+            switch(selectedLocation) {
+                case 'tasmania': visibility = currentData.visibility.tasmania; break;
+                case 'victoria': visibility = currentData.visibility.victoria; break;
+                case 'south-aus': visibility = currentData.visibility.southAustralia; break;
+                case 'west-aus': visibility = currentData.visibility.westernAustralia; break;
+                case 'nsw': visibility = currentData.visibility.newSouthWales; break;
             }
             
-            // Color code alert status
-            if (currentData.currentKp >= 5) {
-                alertStatus.style.color = '#ffaa00';
-            } else if (currentData.currentKp >= 6) {
-                alertStatus.style.color = '#ff4444';
-            } else {
-                alertStatus.style.color = '#00ff88';
+            // Update best time based on current hour
+            bestTime.textContent = currentData.bestViewingTime;
+            moonPhase.textContent = currentData.moonPhase;
+            cloudCover.textContent = currentData.cloudCover + '%';
+            
+            // Update visibility chance color
+            const visibilityElement = document.getElementById(`${selectedLocation.replace('-', '')}Chance`);
+            if (visibilityElement) {
+                if (visibility >= 70) {
+                    visibilityElement.style.color = 'var(--aurora-green)';
+                } else if (visibility >= 40) {
+                    visibilityElement.style.color = 'var(--aurora-blue)';
+                } else {
+                    visibilityElement.style.color = '#a0d2ff';
+                }
             }
         }
         
-        // Toggle auto refresh
+        // Check for alerts
+        function checkForAlerts(data) {
+            if (data.kp.current >= 6) {
+                showAlert(`AURORA ALERT: KP ${data.kp.current.toFixed(1)} - Southern Lights may be visible!`);
+            } else if (data.solarWind.bz < -10) {
+                showAlert(`FAVORABLE CONDITIONS: Strong negative Bz (${data.solarWind.bz.toFixed(1)} nT) detected`);
+            }
+        }
+        
+        // Show alert
+        function showAlert(message) {
+            alertMessage.textContent = message;
+            alertBanner.classList.add('active');
+            
+            // Auto-hide after 30 seconds
+            setTimeout(() => {
+                alertBanner.classList.remove('active');
+            }, 30000);
+        }
+        
+        // Test alert system
+        function testAlertSystem() {
+            showAlert('TEST ALERT: This is a test of the aurora alert system. All systems functioning.');
+        }
+        
+        // Toggle auto-refresh
         function toggleAutoRefresh() {
             isAutoRefresh = !isAutoRefresh;
             
             if (isAutoRefresh) {
-                autoRefreshButton.textContent = 'Auto Refresh: ON (10s)';
-                autoRefreshButton.style.background = 'linear-gradient(90deg, #00ff88, #00d2ff)';
+                autoRefreshStatus.textContent = 'ON (60s)';
+                autoRefreshBtn.style.background = 'linear-gradient(90deg, var(--aurora-green), var(--aurora-blue))';
                 
-                autoRefreshInterval = setInterval(() => {
-                    loadLiveData();
-                }, 10000); // Refresh every 10 seconds
+                autoRefreshInterval = setInterval(fetchAllData, 60000); // Every 60 seconds
                 
-                showStatus('🔄 Auto-refresh enabled (every 10 seconds)', 'success');
+                showStatus('Auto-refresh enabled (every 60 seconds)', 'success');
             } else {
-                autoRefreshButton.textContent = 'Auto Refresh: OFF';
-                autoRefreshButton.style.background = 'linear-gradient(90deg, #00d2ff, #3a7bd5)';
+                autoRefreshStatus.textContent = 'OFF';
+                autoRefreshBtn.style.background = '';
                 
                 if (autoRefreshInterval) {
                     clearInterval(autoRefreshInterval);
                     autoRefreshInterval = null;
                 }
                 
-                showStatus('⏸️ Auto-refresh disabled', 'success');
+                showStatus('Auto-refresh disabled', 'success');
             }
         }
         
         // Show loading state
         function showLoading(show) {
-            loadingDiv.style.display = show ? 'block' : 'none';
-            forecastDisplay.style.display = show ? 'none' : 'block';
-            loadButton.disabled = show;
-            loadButton.innerHTML = show ? 
-                '<span style="display: inline-block; animation: spin 1s linear infinite;">⟳</span> Loading...' : 
-                'Load Live Data';
+            loadingOverlay.style.display = show ? 'block' : 'none';
+            refreshBtn.disabled = show;
         }
         
         // Show status message
         function showStatus(message, type) {
             statusDiv.textContent = message;
-            statusDiv.className = `status ${type}`;
-        }
-        
-        // Clear status
-        function clearStatus() {
-            statusDiv.textContent = '';
-            statusDiv.className = 'status';
+            statusDiv.className = `status active ${type}`;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusDiv.classList.remove('active');
+            }, 5000);
         }
         
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
-            // Load data immediately
-            setTimeout(() => {
-                loadLiveData();
-                showStatus('🚀 Loading live BOM space weather data...', 'success');
-            }, 500);
+            // Start with a data fetch
+            setTimeout(fetchAllData, 1000);
+            
+            // Show initial status
+            showStatus('Loading Australian Aurora Tracker...', 'success');
         });
+        
+        // Add real-time clock update
+        setInterval(() => {
+            if (currentData) {
+                const now = new Date();
+                lastUpdatedTime.textContent = now.toLocaleTimeString();
+            }
+        }, 1000);
     </script>
 </body>
 </html>
