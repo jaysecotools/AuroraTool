@@ -1027,13 +1027,35 @@
             return 'Tonight 10PM-2AM';
         }
         
-        function getMoonPhase(date) {
-            const phases = ['New Moon', 'Waxing Crescent', 'First Quarter', 
-                          'Waxing Gibbous', 'Full Moon', 'Waning Gibbous', 
-                          'Last Quarter', 'Waning Crescent'];
-            const phaseIndex = Math.floor((date.getDate() / 30) * 8) % 8;
-            return phases[phaseIndex];
-        }
+function getMoonPhase(date) {
+    // More accurate calculation
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    // Convert to Julian Day
+    let jd = (1461 * (year + 4800 + (month - 14)/12))/4 +
+             (367 * (month - 2 - 12 * ((month - 14)/12)))/12 -
+             (3 * ((year + 4900 + (month - 14)/12)/100))/4 +
+             day - 32075;
+    
+    // Calculate days since known new moon (Jan 6, 2000)
+    const knownNewMoonJD = 2451550.1;
+    const daysSinceNewMoon = jd - knownNewMoonJD;
+    const newMoons = daysSinceNewMoon / 29.53058867;
+    const phase = (newMoons - Math.floor(newMoons)) * 29.53058867;
+    
+    // Return phase name
+    if (phase < 1.84566) return 'New Moon';
+    if (phase < 5.53699) return 'Waxing Crescent';
+    if (phase < 9.22831) return 'First Quarter';
+    if (phase < 12.91963) return 'Waxing Gibbous';
+    if (phase < 16.61096) return 'Full Moon';
+    if (phase < 20.30228) return 'Waning Gibbous';
+    if (phase < 23.99361) return 'Last Quarter';
+    if (phase < 27.68493) return 'Waning Crescent';
+    return 'New Moon'; // Complete the cycle
+}
         
         // ============================
         // ALERT SYSTEM
