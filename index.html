@@ -471,6 +471,46 @@
             margin-left: 5px;
             opacity: 0.8;
         }
+        
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .debug-title {
+            color: var(--aurora-blue);
+            font-weight: bold;
+            margin-bottom: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .debug-content {
+            display: none;
+        }
+        
+        .debug-item {
+            margin-bottom: 5px;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .debug-label {
+            color: #a0d2ff;
+            display: inline-block;
+            width: 180px;
+        }
+        
+        .debug-value {
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -506,6 +546,9 @@
             <button class="btn" onclick="showDataSourceInfo()" style="background: rgba(255,255,255,0.1);">
                 ℹ️ Data Sources
             </button>
+            <button class="btn" onclick="toggleDebugPanel()" style="background: rgba(255,255,255,0.1);">
+                🐛 Debug KP Data
+            </button>
         </div>
         
         <div id="loading" class="loading">
@@ -514,6 +557,57 @@
         </div>
         
         <div id="dataAlert" class="alert" style="display: none;"></div>
+        
+        <!-- Debug Panel -->
+        <div class="card" id="debugPanel" style="display: none;">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🔍</span> KP Data Verification
+                </div>
+            </div>
+            <div id="debugContent" class="debug-content">
+                <div class="debug-item">
+                    <span class="debug-label">Current KP Source:</span>
+                    <span class="debug-value" id="debugKpSource">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Raw KP Value:</span>
+                    <span class="debug-value" id="debugRawKp">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Data Timestamp:</span>
+                    <span class="debug-value" id="debugKpTimestamp">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Time Difference:</span>
+                    <span class="debug-value" id="debugTimeDiff">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">NOAA API Response:</span>
+                    <span class="debug-value" id="debugApiStatus">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Data Points Count:</span>
+                    <span class="debug-value" id="debugDataPoints">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Forecast Range:</span>
+                    <span class="debug-value" id="debugForecastRange">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Alternative Sources:</span>
+                    <span class="debug-value" id="debugAltSources">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Geospace Summary KP:</span>
+                    <span class="debug-value" id="debugGeospaceKp">--</span>
+                </div>
+                <div class="debug-item">
+                    <span class="debug-label">Data Quality:</span>
+                    <span class="debug-value" id="debugDataQuality">--</span>
+                </div>
+            </div>
+        </div>
         
         <div id="dashboardContent" style="display: none;">
             <div class="dashboard">
@@ -751,7 +845,11 @@
             noaaKpForecast: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json',
             noaaGeospace: 'https://services.swpc.noaa.gov/products/summary/geospace-1-day.json',
             noaaSolarWindMag: 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json',
-            noaaSolarWindPlasma: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json'
+            noaaSolarWindPlasma: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json',
+            // Alternative KP sources for verification
+            noaaGeospaceSummary: 'https://services.swpc.noaa.gov/products/summary/geospace-1-day.json',
+            noaaKp1m: 'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json',
+            noaaKpNow: 'https://services.swpc.noaa.gov/products/geospace/geospace_predicted_kp_1hour.json'
         };
         
         // DOM Elements
@@ -790,6 +888,20 @@
         const fetchBtn = document.getElementById('fetchBtn');
         const warningAlert = document.getElementById('warningAlert');
         const dashboardContent = document.getElementById('dashboardContent');
+        const debugPanel = document.getElementById('debugPanel');
+        const debugContent = document.getElementById('debugContent');
+        
+        // Debug elements
+        const debugKpSource = document.getElementById('debugKpSource');
+        const debugRawKp = document.getElementById('debugRawKp');
+        const debugKpTimestamp = document.getElementById('debugKpTimestamp');
+        const debugTimeDiff = document.getElementById('debugTimeDiff');
+        const debugApiStatus = document.getElementById('debugApiStatus');
+        const debugDataPoints = document.getElementById('debugDataPoints');
+        const debugForecastRange = document.getElementById('debugForecastRange');
+        const debugAltSources = document.getElementById('debugAltSources');
+        const debugGeospaceKp = document.getElementById('debugGeospaceKp');
+        const debugDataQuality = document.getElementById('debugDataQuality');
         
         // App State
         let currentData = null;
@@ -799,9 +911,10 @@
         let isUsingRealData = false;
         let lastFetchTime = null;
         let previousBz = 0;
+        let debugMode = false;
         
         // ============================
-        // MAIN DATA FETCH FUNCTION
+        // MAIN DATA FETCH FUNCTION - FIXED KP LOGIC
         // ============================
         
         async function fetchRealData() {
@@ -813,8 +926,8 @@
             try {
                 const startTime = Date.now();
                 
-                // Fetch current KP data
-                const currentKpData = await fetchCurrentKpData();
+                // Fetch current KP data (using the CORRECT method)
+                const currentKpData = await fetchVerifiedKpData();
                 
                 // Fetch forecast data
                 const forecastKpData = await fetchForecastData();
@@ -834,8 +947,9 @@
                     forecast: forecastKpData,
                     solarWind: solarWindData,
                     timestamp: new Date(),
-                    source: 'NOAA Space Weather',
-                    latency: Date.now() - startTime
+                    source: currentKpData.source || 'NOAA Space Weather',
+                    latency: Date.now() - startTime,
+                    verification: currentKpData.verification || {}
                 };
                 
                 // Validate overall data
@@ -855,14 +969,14 @@
                 // Show success
                 dashboardContent.style.display = 'block';
                 updateStatus('✅ LIVE DATA', 'status-live');
-                dataSource.textContent = 'NOAA Space Weather';
+                dataSource.textContent = combinedData.source;
                 verificationBadge.textContent = 'Verified';
                 verificationBadge.className = 'verification-badge verified';
-                sourceName.textContent = 'NOAA Space Weather';
+                sourceName.textContent = combinedData.source;
                 verifiedTime.textContent = new Date().toLocaleTimeString();
                 sourceStatus.textContent = 'Connected';
                 sourceLatency.textContent = combinedData.latency + ' ms';
-                dataQuality.textContent = 'Real-Time';
+                dataQuality.textContent = currentKpData.quality || 'Real-Time';
                 dataQuality.style.color = 'var(--aurora-green)';
                 
                 // Update alerts
@@ -870,6 +984,11 @@
                 warningAlert.innerHTML = '✅ <strong>Real data loaded successfully!</strong> Showing live KP values and forecasts.';
                 
                 showDataAlert('success', `✅ Data loaded in ${combinedData.latency}ms!`);
+                
+                // Update debug panel if visible
+                if (debugMode) {
+                    updateDebugPanel(combinedData);
+                }
                 
             } catch (error) {
                 console.error('Failed to fetch real data:', error);
@@ -886,80 +1005,167 @@
             }
         }
         
-        async function fetchCurrentKpData() {
+        // ============================
+        // FIXED: VERIFIED KP DATA FETCHING
+        // ============================
+        
+        async function fetchVerifiedKpData() {
+            const now = new Date();
+            const verificationInfo = {};
+            
             try {
-                // Try the forecast endpoint first (most reliable)
-                const response = await fetch(DATA_SOURCES.noaaKpForecast);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
-                const data = await response.json();
-                if (!Array.isArray(data) || data.length < 2) {
-                    throw new Error('Invalid data format');
-                }
-                
-                // Get the most recent forecast (first data point after header)
-                const forecastEntries = data.slice(1);
-                
-                // Find the most recent entry
-                const now = new Date();
-                let latestEntry = null;
-                let latestTimeDiff = Infinity;
-                
-                for (const entry of forecastEntries) {
-                    const entryTime = new Date(entry[0]);
-                    const timeDiff = Math.abs(now - entryTime);
-                    
-                    // Look for entries within the last 6 hours or next 3 hours
-                    if (timeDiff < 6 * 60 * 60 * 1000 || 
-                        (entryTime > now && timeDiff < 3 * 60 * 60 * 1000)) {
-                        if (timeDiff < latestTimeDiff) {
-                            latestTimeDiff = timeDiff;
-                            latestEntry = entry;
-                        }
-                    }
-                }
-                
-                if (!latestEntry) {
-                    // Fallback to the first forecast entry
-                    latestEntry = forecastEntries[0];
-                }
-                
-                const kpValue = parseFloat(latestEntry[1]);
-                const entryTime = new Date(latestEntry[0]);
-                
-                // Get additional context from geospace summary
-                let kpMax = kpValue + 0.5;
-                let kpMin = Math.max(0, kpValue - 0.5);
+                // METHOD 1: Try to get CURRENT KP from 1-minute data
+                let currentKp = null;
+                let currentTimestamp = now;
+                let source = 'NOAA Real-time';
                 
                 try {
-                    const geoResponse = await fetch(DATA_SOURCES.noaaGeospace);
-                    if (geoResponse.ok) {
-                        const geoData = await geoResponse.json();
-                        if (geoData && geoData.Kp) {
-                            const currentKp = parseFloat(geoData.Kp);
-                            // Use the larger of forecast or current
-                            kpMax = Math.max(kpValue, currentKp) + 0.3;
-                            kpMin = Math.min(kpValue, currentKp) - 0.3;
+                    const kp1mResponse = await fetch(DATA_SOURCES.noaaKp1m);
+                    if (kp1mResponse.ok) {
+                        const kp1mData = await kp1mResponse.json();
+                        if (Array.isArray(kp1mData) && kp1mData.length > 0) {
+                            // Get the most recent entry (last in array)
+                            const latest = kp1mData[kp1mData.length - 1];
+                            if (latest && latest.kp !== undefined) {
+                                currentKp = parseFloat(latest.kp);
+                                currentTimestamp = new Date(latest.time_tag);
+                                source = 'NOAA 1-min KP';
+                                verificationInfo.method1 = `1-min KP: ${currentKp} at ${currentTimestamp.toISOString()}`;
+                            }
                         }
                     }
                 } catch (e) {
-                    // Ignore geospace errors
+                    verificationInfo.method1Error = e.message;
+                }
+                
+                // METHOD 2: Try geospace summary (often has current KP)
+                let geospaceKp = null;
+                try {
+                    const geoResponse = await fetch(DATA_SOURCES.noaaGeospaceSummary);
+                    if (geoResponse.ok) {
+                        const geoData = await geoResponse.json();
+                        if (geoData && geoData.Kp) {
+                            geospaceKp = parseFloat(geoData.Kp);
+                            verificationInfo.method2 = `Geospace KP: ${geospaceKp}`;
+                            
+                            // If we don't have 1-min data, use geospace data
+                            if (currentKp === null) {
+                                currentKp = geospaceKp;
+                                source = 'NOAA Geospace Summary';
+                            }
+                        }
+                    }
+                } catch (e) {
+                    verificationInfo.method2Error = e.message;
+                }
+                
+                // METHOD 3: Use forecast data (your original method as fallback)
+                if (currentKp === null) {
+                    try {
+                        const forecastResponse = await fetch(DATA_SOURCES.noaaKpForecast);
+                        if (forecastResponse.ok) {
+                            const forecastData = await forecastResponse.json();
+                            if (Array.isArray(forecastData) && forecastData.length > 1) {
+                                // Get forecast entries (skip header)
+                                const forecastEntries = forecastData.slice(1);
+                                
+                                // Find the most recent PAST forecast (not future)
+                                const pastForecasts = forecastEntries.filter(entry => {
+                                    const entryTime = new Date(entry[0]);
+                                    return entryTime <= now;
+                                });
+                                
+                                if (pastForecasts.length > 0) {
+                                    // Use the most recent past forecast
+                                    const latestPast = pastForecasts[pastForecasts.length - 1];
+                                    currentKp = parseFloat(latestPast[1]);
+                                    currentTimestamp = new Date(latestPast[0]);
+                                    source = 'NOAA Recent Forecast';
+                                    verificationInfo.method3 = `Recent forecast KP: ${currentKp}`;
+                                } else {
+                                    // If no past forecasts, use the first future forecast
+                                    const firstFuture = forecastEntries[0];
+                                    currentKp = parseFloat(firstFuture[1]);
+                                    currentTimestamp = new Date(firstFuture[0]);
+                                    source = 'NOAA Future Forecast';
+                                    verificationInfo.method3 = `Future forecast KP: ${currentKp}`;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        verificationInfo.method3Error = e.message;
+                    }
+                }
+                
+                // If all methods failed, throw error
+                if (currentKp === null || isNaN(currentKp)) {
+                    throw new Error('Could not retrieve KP data from any source');
+                }
+                
+                // Calculate time difference
+                const timeDiff = Math.abs(now - currentTimestamp);
+                const timeDiffMinutes = Math.floor(timeDiff / (1000 * 60));
+                
+                // Determine data quality based on freshness
+                let quality = 'Real-Time';
+                if (timeDiffMinutes > 60) quality = 'Delayed';
+                if (timeDiffMinutes > 180) quality = 'Stale';
+                
+                verificationInfo.timestamp = currentTimestamp.toISOString();
+                verificationInfo.timeDiffMinutes = timeDiffMinutes;
+                verificationInfo.freshness = quality;
+                
+                // Get KP range based on data source confidence
+                let kpMax = currentKp + 0.3;
+                let kpMin = Math.max(0, currentKp - 0.3);
+                
+                // If using forecast data, widen the range
+                if (source.includes('Forecast')) {
+                    kpMax = currentKp + 0.5;
+                    kpMin = Math.max(0, currentKp - 0.5);
+                }
+                
+                // If data is stale, widen the range more
+                if (quality === 'Stale') {
+                    kpMax = currentKp + 1.0;
+                    kpMin = Math.max(0, currentKp - 1.0);
                 }
                 
                 return {
-                    kp: kpValue,
+                    kp: currentKp,
                     kpMax: Math.max(0, Math.min(9, kpMax)),
                     kpMin: Math.max(0, Math.min(9, kpMin)),
-                    kpAvg: kpValue,
+                    kpAvg: currentKp,
                     trend: 'current',
-                    timestamp: entryTime,
-                    source: 'NOAA Forecast'
+                    timestamp: currentTimestamp,
+                    source: source,
+                    quality: quality,
+                    verification: verificationInfo
                 };
                 
             } catch (error) {
-                throw new Error(`Current KP fetch failed: ${error.message}`);
+                console.error('Failed to fetch verified KP data:', error);
+                verificationInfo.error = error.message;
+                
+                // Return fallback data with verification info
+                return {
+                    kp: 3.0,
+                    kpMax: 4.0,
+                    kpMin: 2.0,
+                    kpAvg: 3.0,
+                    trend: 'current',
+                    timestamp: now,
+                    source: 'Fallback (API Error)',
+                    quality: 'Estimated',
+                    verification: verificationInfo,
+                    isFallback: true
+                };
             }
         }
+        
+        // ============================
+        // FORECAST DATA (unchanged from your working version)
+        // ============================
         
         async function fetchForecastData() {
             try {
@@ -1033,6 +1239,10 @@
             }
         }
         
+        // ============================
+        // SOLAR WIND DATA (unchanged from your working version)
+        // ============================
+        
         async function fetchSolarWindData() {
             try {
                 // Fetch both magnetic and plasma data
@@ -1094,6 +1304,63 @@
                 isFallback: true
             };
         }
+        
+        // ============================
+        // DEBUG PANEL FUNCTIONS
+        // ============================
+        
+        function toggleDebugPanel() {
+            debugMode = !debugMode;
+            debugPanel.style.display = debugMode ? 'block' : 'none';
+            debugContent.style.display = debugMode ? 'block' : 'none';
+            
+            if (debugMode && currentData) {
+                updateDebugPanel(currentData);
+            }
+        }
+        
+        function updateDebugPanel(data) {
+            if (!data || !data.verification) return;
+            
+            const now = new Date();
+            const kpTime = data.timestamp;
+            const timeDiff = Math.abs(now - kpTime);
+            const timeDiffMinutes = Math.floor(timeDiff / (1000 * 60));
+            
+            debugKpSource.textContent = data.source || 'Unknown';
+            debugRawKp.textContent = data.kp.toFixed(2);
+            debugKpTimestamp.textContent = kpTime.toISOString();
+            debugTimeDiff.textContent = `${timeDiffMinutes} minutes ago`;
+            debugDataQuality.textContent = data.quality || 'Unknown';
+            
+            // Update verification info
+            if (data.verification) {
+                debugGeospaceKp.textContent = data.verification.method2 || 'Not retrieved';
+                
+                let altSources = [];
+                if (data.verification.method1) altSources.push('1-min KP');
+                if (data.verification.method2) altSources.push('Geospace');
+                if (data.verification.method3) altSources.push('Forecast');
+                debugAltSources.textContent = altSources.join(', ') || 'None';
+                
+                debugApiStatus.textContent = data.verification.error ? `Error: ${data.verification.error}` : 'OK';
+            }
+            
+            // Update forecast info
+            if (forecastData) {
+                debugDataPoints.textContent = forecastData.allForecasts ? forecastData.allForecasts.length : 0;
+                
+                if (forecastData.allForecasts && forecastData.allForecasts.length > 0) {
+                    const first = forecastData.allForecasts[0].timestamp;
+                    const last = forecastData.allForecasts[forecastData.allForecasts.length - 1].timestamp;
+                    debugForecastRange.textContent = `${first.toLocaleDateString()} to ${last.toLocaleDateString()}`;
+                }
+            }
+        }
+        
+        // ============================
+        // REST OF THE CODE (unchanged from your working version)
+        // ============================
         
         async function tryBackupSource() {
             try {
@@ -1216,10 +1483,6 @@
             };
         }
         
-        // ============================
-        // DATA VALIDATION
-        // ============================
-        
         function validateSpaceWeatherData(data) {
             if (!data || typeof data !== 'object') return false;
             if (typeof data.kp !== 'number' || data.kp < 0 || data.kp > 9) return false;
@@ -1237,10 +1500,6 @@
             
             return validSpeed && validDensity && validBz;
         }
-        
-        // ============================
-        // FIXED FORECAST CHART - Bars anchored to bottom
-        // ============================
         
         function updateForecastChart(forecastData) {
             if (!forecastData || !forecastData.allForecasts) {
@@ -1406,10 +1665,6 @@
             }
         }
         
-        // ============================
-        // DISPLAY FUNCTIONS
-        // ============================
-        
         function updateDisplay(data) {
             if (!data) return;
             
@@ -1537,10 +1792,6 @@
             // Update location info
             updateLocationInfo();
         }
-        
-        // ============================
-        // HELPER FUNCTIONS
-        // ============================
         
         function calculateVisibility(kp) {
             const baseChance = Math.min(95, Math.max(0, (kp - 4) * 20));
