@@ -377,7 +377,7 @@
             margin: 2rem 0 3rem 0;
             position: relative;
             display: flex;
-            align-items: flex-end; /* Changed: bars start at bottom */
+            align-items: flex-end;
             justify-content: space-around;
             padding: 0 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -391,7 +391,7 @@
             position: relative;
             flex: 1;
             margin: 0 2px;
-            justify-content: flex-end; /* Changed: content starts at bottom */
+            justify-content: flex-end;
         }
         
         .forecast-bar {
@@ -400,7 +400,6 @@
             border-radius: 4px 4px 0 0;
             transition: all 0.3s ease;
             min-height: 5px;
-            /* Removed: no fixed height, will be set by JS */
         }
         
         .forecast-time {
@@ -417,7 +416,7 @@
         
         .forecast-value {
             position: absolute;
-            top: -25px; /* Changed: above the bar */
+            top: -25px;
             font-size: 0.9rem;
             color: white;
             font-weight: 600;
@@ -464,7 +463,13 @@
             width: 100%;
             height: 1px;
             background: rgba(255, 255, 255, 0.1);
-            left: 40px; /* Account for Y-axis */
+            left: 40px;
+        }
+        
+        .bz-indicator {
+            font-size: 0.8rem;
+            margin-left: 5px;
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -573,7 +578,10 @@
                                 <div class="data-value" id="density">--<span style="font-size: 0.8rem;"> p/cm³</span></div>
                             </div>
                             <div class="data-item">
-                                <div class="data-label">Bz Component</div>
+                                <div class="data-label">
+                                    Bz Component
+                                    <span style="font-size:0.7rem; color:#a0d2ff;" title="Magnetic field Z-component (north-south). Negative values enhance aurora.">ⓘ</span>
+                                </div>
                                 <div class="data-value" id="bzComponent">--<span style="font-size: 0.8rem;"> nT</span></div>
                             </div>
                             <div class="data-item">
@@ -742,7 +750,8 @@
             noaaKpCurrent: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',
             noaaKpForecast: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json',
             noaaGeospace: 'https://services.swpc.noaa.gov/products/summary/geospace-1-day.json',
-            noaaSolarWind: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json'
+            noaaSolarWindMag: 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json',
+            noaaSolarWindPlasma: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json'
         };
         
         // DOM Elements
@@ -789,6 +798,7 @@
         let forecastInterval = '3h';
         let isUsingRealData = false;
         let lastFetchTime = null;
+        let previousBz = 0;
         
         // ============================
         // MAIN DATA FETCH FUNCTION
@@ -809,8 +819,14 @@
                 // Fetch forecast data
                 const forecastKpData = await fetchForecastData();
                 
-                // Fetch solar wind data
+                // Fetch solar wind data (with Bz)
                 let solarWindData = await fetchSolarWindData();
+                
+                // Validate solar wind data
+                if (!validateSolarWindData(solarWindData)) {
+                    console.warn('Solar wind data validation failed, using fallback');
+                    solarWindData = generateFallbackSolarWindData();
+                }
                 
                 // Combine all data
                 const combinedData = {
@@ -822,7 +838,7 @@
                     latency: Date.now() - startTime
                 };
                 
-                // Validate data
+                // Validate overall data
                 if (!validateSpaceWeatherData(combinedData)) {
                     throw new Error('Data validation failed');
                 }
@@ -1019,33 +1035,64 @@
         
         async function fetchSolarWindData() {
             try {
-                const response = await fetch(DATA_SOURCES.noaaSolarWind);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                // Fetch both magnetic and plasma data
+                const [magResponse, plasmaResponse] = await Promise.all([
+                    fetch(DATA_SOURCES.noaaSolarWindMag),
+                    fetch(DATA_SOURCES.noaaSolarWindPlasma)
+                ]);
                 
-                const data = await response.json();
-                if (!Array.isArray(data) || data.length < 2) {
-                    throw new Error('Invalid solar wind data');
+                if (!magResponse.ok || !plasmaResponse.ok) {
+                    throw new Error('Failed to fetch solar wind data');
                 }
                 
-                // Get latest solar wind data
-                const latest = data[data.length - 1];
+                const magData = await magResponse.json();
+                const plasmaData = await plasmaResponse.json();
+                
+                if (!Array.isArray(magData) || !Array.isArray(plasmaData)) {
+                    throw new Error('Invalid data format');
+                }
+                
+                // Get latest entries (skip header row if present)
+                const magEntries = magData.slice(1);
+                const plasmaEntries = plasmaData.slice(1);
+                
+                if (magEntries.length === 0 || plasmaEntries.length === 0) {
+                    throw new Error('No solar wind data available');
+                }
+                
+                const latestMag = magEntries[magEntries.length - 1];
+                const latestPlasma = plasmaEntries[plasmaEntries.length - 1];
+                
+                // Parse data - NOAA format:
+                // mag-2-hour.json: [time_tag, bx_gsm, by_gsm, bz_gsm, ...]
+                // plasma-2-hour.json: [time_tag, density, speed, temperature, ...]
+                
                 return {
-                    speed: parseFloat(latest[1]) || 400,
-                    density: parseFloat(latest[2]) || 5.0,
-                    temperature: parseFloat(latest[3]) || 100000,
-                    timestamp: new Date(latest[0])
+                    speed: parseFloat(latestPlasma[2]) || 400,      // km/s
+                    density: parseFloat(latestPlasma[1]) || 5.0,    // p/cm³
+                    bz: parseFloat(latestMag[3]) || 0,              // nT (Bz component)
+                    temperature: parseFloat(latestPlasma[3]) || 100000,
+                    timestamp: new Date(latestMag[0]),
+                    isReal: true
                 };
                 
             } catch (error) {
-                // Return realistic fallback data
-                return {
-                    speed: 400 + Math.random() * 200,
-                    density: 5 + Math.random() * 10,
-                    temperature: 100000 + Math.random() * 50000,
-                    timestamp: new Date(),
-                    isFallback: true
-                };
+                console.warn('Solar wind fetch failed:', error);
+                // Return fallback data
+                return generateFallbackSolarWindData();
             }
+        }
+        
+        function generateFallbackSolarWindData() {
+            // Return realistic fallback data with proper Bz
+            return {
+                speed: 400 + Math.random() * 200,
+                density: 5 + Math.random() * 10,
+                bz: -5 + Math.random() * 10,  // Range: -5 to +5 nT
+                temperature: 100000 + Math.random() * 50000,
+                timestamp: new Date(),
+                isFallback: true
+            };
         }
         
         async function tryBackupSource() {
@@ -1080,7 +1127,8 @@
                                 trend: 'current',
                                 timestamp: new Date(),
                                 source: 'NOAA Backup',
-                                isBackup: true
+                                isBackup: true,
+                                solarWind: generateFallbackSolarWindData()
                             };
                             
                             currentData = backupData;
@@ -1166,6 +1214,28 @@
                 source: 'Generated Forecast',
                 isFallback: true
             };
+        }
+        
+        // ============================
+        // DATA VALIDATION
+        // ============================
+        
+        function validateSpaceWeatherData(data) {
+            if (!data || typeof data !== 'object') return false;
+            if (typeof data.kp !== 'number' || data.kp < 0 || data.kp > 9) return false;
+            if (!data.timestamp || !(data.timestamp instanceof Date)) return false;
+            return true;
+        }
+        
+        function validateSolarWindData(solarWind) {
+            if (!solarWind) return false;
+            
+            // Check for realistic ranges
+            const validSpeed = solarWind.speed >= 200 && solarWind.speed <= 1000;
+            const validDensity = solarWind.density >= 0.1 && solarWind.density <= 100;
+            const validBz = solarWind.bz >= -50 && solarWind.bz <= 50;
+            
+            return validSpeed && validDensity && validBz;
         }
         
         // ============================
@@ -1358,13 +1428,55 @@
             
             // Update solar wind
             if (data.solarWind) {
-                windSpeed.textContent = Math.round(data.solarWind.speed);
-                density.textContent = data.solarWind.density.toFixed(1);
-                // Generate realistic Bz component (negative is good for aurora)
-                const bz = -5 - Math.random() * 10;
-                bzComponent.textContent = bz.toFixed(1);
-                bzComponent.style.color = bz < 0 ? 'var(--aurora-green)' : '#ff5500';
+                // Speed
+                const speed = data.solarWind.speed;
+                windSpeed.textContent = Math.round(speed);
+                windSpeed.style.color = speed > 500 ? 'var(--aurora-green)' : 
+                                       speed > 400 ? 'orange' : '#a0d2ff';
+                
+                // Density
+                const densityVal = data.solarWind.density;
+                density.textContent = densityVal.toFixed(1);
+                density.style.color = densityVal > 10 ? 'var(--aurora-green)' : '#a0d2ff';
+                
+                // Bz Component (CRITICAL for aurora)
+                const bz = data.solarWind.bz || 0;
+                let bzText = bz.toFixed(1);
+                
+                // Add trend indicator
+                const bzTrend = previousBz !== 0 ? bz - previousBz : 0;
+                let trendSymbol = '';
+                if (bzTrend < -0.5) trendSymbol = ' ↓';
+                else if (bzTrend > 0.5) trendSymbol = ' ↑';
+                
+                previousBz = bz;
+                
+                // Color coding for Bz:
+                let bzStatus = '';
+                if (bz <= -10) {
+                    bzComponent.style.color = 'var(--aurora-green)';
+                    bzComponent.style.fontWeight = 'bold';
+                    bzStatus = ' (STRONG)';
+                } else if (bz <= -5) {
+                    bzComponent.style.color = 'var(--aurora-green)';
+                    bzStatus = ' (GOOD)';
+                } else if (bz < 0) {
+                    bzComponent.style.color = 'lightgreen';
+                } else if (bz > 0) {
+                    bzComponent.style.color = '#ff5500';
+                    bzStatus = ' (POOR)';
+                } else {
+                    bzComponent.style.color = '#a0d2ff';
+                }
+                
+                bzComponent.innerHTML = `${bzText}<span class="bz-indicator">${trendSymbol}${bzStatus}</span>`;
+                
+                // Update timestamp
                 solarUpdated.textContent = data.solarWind.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                // Add Bz status to source info
+                const bzCondition = bz < 0 ? 'favorable' : 'unfavorable';
+                sourceStatus.innerHTML = `Connected | Bz: <span style="color: ${bz < 0 ? 'var(--aurora-green)' : '#ff5500'}">${bzCondition}</span>`;
             }
             
             // Update location info
@@ -1430,13 +1542,6 @@
         // HELPER FUNCTIONS
         // ============================
         
-        function validateSpaceWeatherData(data) {
-            if (!data || typeof data !== 'object') return false;
-            if (typeof data.kp !== 'number' || data.kp < 0 || data.kp > 9) return false;
-            if (!data.timestamp || !(data.timestamp instanceof Date)) return false;
-            return true;
-        }
-        
         function calculateVisibility(kp) {
             const baseChance = Math.min(95, Math.max(0, (kp - 4) * 20));
             return {
@@ -1492,6 +1597,7 @@
         function checkForAlerts(data) {
             const alerts = [];
             
+            // KP-based alerts
             if (data.kp >= 8) {
                 alerts.push(`KP ${data.kp.toFixed(1)} - Extreme storm! Aurora possible across Australia!`);
             } else if (data.kp >= 7) {
@@ -1500,6 +1606,16 @@
                 alerts.push(`KP ${data.kp.toFixed(1)} - Strong storm! Good chance in Tasmania.`);
             }
             
+            // Bz-based alerts
+            if (data.solarWind && data.solarWind.bz <= -10) {
+                alerts.push(`Bz ${data.solarWind.bz.toFixed(1)} nT - Strong southward magnetic field! Excellent aurora conditions!`);
+            } else if (data.solarWind && data.solarWind.bz <= -5) {
+                alerts.push(`Bz ${data.solarWind.bz.toFixed(1)} nT - Southward Bz - Good aurora conditions`);
+            } else if (data.solarWind && data.solarWind.bz > 5) {
+                alerts.push(`Bz ${data.solarWind.bz.toFixed(1)} nT - Northward Bz - Poor aurora conditions`);
+            }
+            
+            // Forecast alerts
             if (forecastData) {
                 if (forecastData.peakToday >= 6) {
                     alerts.push(`Today's peak: KP ${forecastData.peakToday.toFixed(1)} expected`);
@@ -1575,7 +1691,7 @@
                 ℹ️ <strong>Data Sources:</strong><br>
                 • NOAA Space Weather Prediction Center<br>
                 • 3-hour KP forecast data<br>
-                • Real-time solar wind measurements<br>
+                • Real-time solar wind measurements (speed, density, Bz)<br>
                 • Automatic updates every 10 minutes
             `);
         }
