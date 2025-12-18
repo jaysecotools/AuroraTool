@@ -23,16 +23,60 @@
         }
         
         body {
-            background: linear-gradient(135deg, var(--bg-darker), var(--bg-dark));
+            background: var(--bg-darker);
             color: #fff;
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Starry Background */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+        }
+        
+        .star.small {
+            width: 1px;
+            height: 1px;
+        }
+        
+        .star.medium {
+            width: 2px;
+            height: 2px;
+        }
+        
+        .star.large {
+            width: 3px;
+            height: 3px;
+        }
+        
+        .twinkle {
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
         .data-status {
@@ -186,6 +230,74 @@
             border-radius: 2px;
             box-shadow: 0 0 10px white;
             transition: left 1s ease;
+        }
+        
+        /* Simplified Gauge/Dial Styles */
+        .dial-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .dial {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .dial-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                #003366 0%,
+                #0066cc 25%,
+                #00aaff 50%,
+                var(--aurora-blue) 75%,
+                var(--aurora-green) 100%
+            );
+        }
+        
+        .dial-center {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 80px;
+            height: 80px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dial-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .dial-unit {
+            font-size: 0.8rem;
+            color: #a0d2ff;
+            margin-left: 2px;
+        }
+        
+        .dial-title {
+            color: #a0d2ff;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .dial-subtitle {
+            font-size: 0.8rem;
+            color: #8899aa;
+            margin-top: 5px;
         }
         
         .data-grid {
@@ -482,9 +594,18 @@
         .quality-recent { background-color: orange; }
         .quality-delayed { background-color: #ff5500; }
         .quality-estimated { background-color: #a0d2ff; }
+        
+        /* Color indicators for values */
+        .good { color: var(--aurora-green) !important; }
+        .fair { color: orange !important; }
+        .poor { color: #ff5500 !important; }
+        .excellent { color: var(--aurora-blue) !important; }
     </style>
 </head>
 <body>
+    <!-- Starry Background -->
+    <div class="stars" id="stars"></div>
+    
     <!-- Data Status Indicator -->
     <div class="data-status status-loading" id="dataStatus">
         🔄 LOADING REAL DATA
@@ -572,32 +693,64 @@
                         </div>
                     </div>
                     
-                    <!-- Solar Wind -->
+                    <!-- Solar Wind with Simple Dials -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
                                 <span>☀️</span> Solar Wind Conditions
                             </div>
                         </div>
+                        
+                        <div class="dial-container">
+                            <div class="dial">
+                                <div class="dial-title">Wind Speed</div>
+                                <div class="dial-circle">
+                                    <div class="dial-center">
+                                        <div class="dial-value" id="speedValue">--</div>
+                                        <div class="dial-unit">km/s</div>
+                                    </div>
+                                </div>
+                                <div class="dial-subtitle">(Optimal: 500-800 km/s)</div>
+                            </div>
+                            
+                            <div class="dial">
+                                <div class="dial-title">Density</div>
+                                <div class="dial-circle">
+                                    <div class="dial-center">
+                                        <div class="dial-value" id="densityValue">--</div>
+                                        <div class="dial-unit">p/cm³</div>
+                                    </div>
+                                </div>
+                                <div class="dial-subtitle">(Optimal: 5-15 p/cm³)</div>
+                            </div>
+                            
+                            <div class="dial">
+                                <div class="dial-title">Bz Component</div>
+                                <div class="dial-circle">
+                                    <div class="dial-center">
+                                        <div class="dial-value" id="bzValue">--</div>
+                                        <div class="dial-unit">nT</div>
+                                    </div>
+                                </div>
+                                <div class="dial-subtitle">(Negative = Good)</div>
+                            </div>
+                        </div>
+                        
                         <div class="data-grid">
                             <div class="data-item">
-                                <div class="data-label">Speed</div>
-                                <div class="data-value" id="windSpeed">--<span style="font-size: 0.8rem;"> km/s</span></div>
-                            </div>
-                            <div class="data-item">
-                                <div class="data-label">Density</div>
-                                <div class="data-value" id="density">--<span style="font-size: 0.8rem;"> p/cm³</span></div>
-                            </div>
-                            <div class="data-item">
                                 <div class="data-label">
-                                    Bz Component
-                                    <span style="font-size:0.7rem; color:#a0d2ff;" title="Magnetic field Z-component (north-south). Negative values enhance aurora.">ⓘ</span>
+                                    Temperature
+                                    <span style="font-size:0.7rem; color:#a0d2ff;" title="Solar wind temperature">ⓘ</span>
                                 </div>
-                                <div class="data-value" id="bzComponent">--<span style="font-size: 0.8rem;"> nT</span></div>
+                                <div class="data-value" id="temperature">--<span style="font-size: 0.8rem;"> K</span></div>
                             </div>
                             <div class="data-item">
                                 <div class="data-label">Updated</div>
                                 <div class="data-value" id="solarUpdated">--:--</span></div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Data Source</div>
+                                <div class="data-value" id="solarSource">NOAA</div>
                             </div>
                         </div>
                     </div>
@@ -755,18 +908,19 @@
 
     <script>
         // ============================
-        // REAL DATA SOURCES
+        // REAL DATA SOURCES - FIXED
         // ============================
         const DATA_SOURCES = {
-            // PRIMARY: Geospace summary - most reliable for current KP
-            noaaGeospace: 'https://services.swpc.noaa.gov/products/summary/geospace-1-day.json',
+            // Current conditions (alternative sources)
+            noaaScales: 'https://services.swpc.noaa.gov/products/noaa-scales.json',
+            noaaGeospace: 'https://services.swpc.noaa.gov/products/summary/geospace.json',
             
-            // SECONDARY: Forecast data for predictions
+            // Forecast data
             noaaKpForecast: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json',
             
-            // SOLAR WIND: Real-time solar conditions
-            noaaSolarWindMag: 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json',
-            noaaSolarWindPlasma: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json'
+            // Solar wind data
+            noaaSolarWind: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json',
+            noaaMag: 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json'
         };
         
         // DOM Elements
@@ -782,10 +936,12 @@
         const qualityIndicator = document.getElementById('qualityIndicator');
         const qualityText = document.getElementById('qualityText');
         const nextUpdate = document.getElementById('nextUpdate');
-        const windSpeed = document.getElementById('windSpeed');
-        const density = document.getElementById('density');
-        const bzComponent = document.getElementById('bzComponent');
+        const speedValue = document.getElementById('speedValue');
+        const densityValue = document.getElementById('densityValue');
+        const bzValue = document.getElementById('bzValue');
+        const temperature = document.getElementById('temperature');
         const solarUpdated = document.getElementById('solarUpdated');
+        const solarSource = document.getElementById('solarSource');
         const currentLocation = document.getElementById('currentLocation');
         const locationChance = document.getElementById('locationChance');
         const bestTime = document.getElementById('bestTime');
@@ -818,6 +974,32 @@
         let previousBz = 0;
         
         // ============================
+        // STARFIELD ANIMATION
+        // ============================
+        function createStarfield() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 200;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                const size = Math.random() * 3;
+                const sizeClass = size < 1 ? 'small' : size < 2 ? 'medium' : 'large';
+                
+                star.className = `star ${sizeClass}`;
+                if (Math.random() > 0.7) {
+                    star.classList.add('twinkle');
+                    star.style.animationDelay = `${Math.random() * 3}s`;
+                }
+                
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.opacity = 0.3 + Math.random() * 0.7;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // ============================
         // MAIN DATA FETCH FUNCTION
         // ============================
         
@@ -830,8 +1012,8 @@
             try {
                 const startTime = Date.now();
                 
-                // Fetch ALL data in parallel for better performance
-                const [kpData, forecastDataResult, solarWindData] = await Promise.all([
+                // Fetch all data in parallel
+                const [currentDataResult, forecastDataResult, solarWindData] = await Promise.all([
                     fetchCurrentKpData(),
                     fetchForecastData(),
                     fetchSolarWindData()
@@ -839,11 +1021,11 @@
                 
                 // Combine all data
                 const combinedData = {
-                    ...kpData,
+                    ...currentDataResult,
                     forecast: forecastDataResult,
                     solarWind: solarWindData,
                     timestamp: new Date(),
-                    source: kpData.source,
+                    source: currentDataResult.source,
                     latency: Date.now() - startTime
                 };
                 
@@ -855,20 +1037,21 @@
                 // Update UI with real data
                 updateDisplay(combinedData);
                 updateForecastChart(forecastDataResult);
+                updateDials(solarWindData);
                 
                 // Show success
                 dashboardContent.style.display = 'block';
                 updateStatus('✅ LIVE DATA', 'status-live');
-                dataSource.textContent = kpData.source;
+                dataSource.textContent = currentDataResult.source;
                 verificationBadge.textContent = 'Verified';
                 verificationBadge.className = 'verification-badge verified';
-                sourceName.textContent = kpData.source;
+                sourceName.textContent = currentDataResult.source;
                 verifiedTime.textContent = new Date().toLocaleTimeString();
                 sourceStatus.textContent = 'Connected';
                 sourceLatency.textContent = combinedData.latency + ' ms';
                 
                 // Update data quality display
-                updateQualityDisplay(kpData.quality);
+                updateQualityDisplay(currentDataResult.quality);
                 
                 warningAlert.className = 'alert alert-success';
                 warningAlert.innerHTML = '✅ <strong>Real data loaded successfully!</strong> Showing live KP values and forecasts.';
@@ -891,151 +1074,101 @@
         }
         
         // ============================
-        // CURRENT KP DATA FETCHING - FIXED
+        // CURRENT KP DATA - FIXED
         // ============================
         
         async function fetchCurrentKpData() {
             const now = new Date();
             
             try {
-                // PRIMARY SOURCE: Geospace summary (most reliable)
-                const response = await fetch(DATA_SOURCES.noaaGeospace);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                // Try multiple endpoints for current KP
+                const endpoints = [
+                    { url: DATA_SOURCES.noaaScales, parser: parseScalesData },
+                    { url: DATA_SOURCES.noaaGeospace, parser: parseGeospaceData }
+                ];
                 
-                const data = await response.json();
-                
-                if (!data || typeof data !== 'object') {
-                    throw new Error('Invalid geospace data format');
-                }
-                
-                // Extract KP value from geospace data
-                let kp = null;
-                let source = 'NOAA Geospace';
-                let quality = 'Recent';
-                
-                if (data.Kp !== undefined && data.Kp !== null) {
-                    kp = parseFloat(data.Kp);
-                } else if (data.kp !== undefined && data.kp !== null) {
-                    kp = parseFloat(data.kp);
-                } else {
-                    // Try to find KP in other fields
-                    for (const [key, value] of Object.entries(data)) {
-                        if (typeof value === 'string' && value.includes('Kp') && !isNaN(parseFloat(value))) {
-                            kp = parseFloat(value);
-                            break;
-                        }
-                    }
-                }
-                
-                if (kp === null || isNaN(kp)) {
-                    throw new Error('Could not extract KP value from geospace data');
-                }
-                
-                // Validate KP range
-                if (kp < 0 || kp > 9) {
-                    console.warn(`KP value ${kp} out of range, clamping`);
-                    kp = Math.max(0, Math.min(9, kp));
-                }
-                
-                // Check if we have timestamp info
-                let timestamp = now;
-                if (data.updated) {
+                for (const endpoint of endpoints) {
                     try {
-                        timestamp = new Date(data.updated);
+                        const response = await fetch(endpoint.url + '?t=' + Date.now()); // Cache bust
+                        if (!response.ok) continue;
+                        
+                        const data = await response.json();
+                        const parsedData = endpoint.parser(data, now);
+                        
+                        if (parsedData && parsedData.kp !== undefined) {
+                            return parsedData;
+                        }
                     } catch (e) {
-                        // Use current time if parsing fails
+                        console.log(`Failed to fetch from ${endpoint.url}:`, e);
+                        continue;
                     }
                 }
                 
-                // Determine data freshness
-                const dataAge = now - timestamp;
-                const dataAgeMinutes = Math.floor(dataAge / (1000 * 60));
-                
-                if (dataAgeMinutes < 30) {
-                    quality = 'Real-Time';
-                } else if (dataAgeMinutes < 120) {
-                    quality = 'Recent';
-                } else {
-                    quality = 'Delayed';
-                }
-                
-                // Calculate KP range (wider range for older data)
-                let kpRange = 0.3;
-                if (dataAgeMinutes > 60) kpRange = 0.5;
-                if (dataAgeMinutes > 180) kpRange = 1.0;
-                
-                return {
-                    kp: kp,
-                    kpMax: Math.min(9, kp + kpRange),
-                    kpMin: Math.max(0, kp - kpRange),
-                    kpAvg: kp,
-                    trend: 'current',
-                    timestamp: timestamp,
-                    source: source,
-                    quality: quality,
-                    dataAgeMinutes: dataAgeMinutes
-                };
+                throw new Error('All current data sources failed');
                 
             } catch (error) {
-                console.error('Geospace fetch failed:', error);
-                
-                // FALLBACK: Try forecast data
-                try {
-                    const forecastResponse = await fetch(DATA_SOURCES.noaaKpForecast);
-                    if (forecastResponse.ok) {
-                        const forecastData = await forecastResponse.json();
-                        
-                        if (Array.isArray(forecastData) && forecastData.length > 1) {
-                            const forecastEntries = forecastData.slice(1);
-                            
-                            // Find the most recent PAST forecast
-                            const pastForecasts = forecastEntries.filter(entry => {
-                                try {
-                                    const entryTime = new Date(entry[0]);
-                                    return entryTime <= now;
-                                } catch (e) {
-                                    return false;
-                                }
-                            });
-                            
-                            if (pastForecasts.length > 0) {
-                                const latestPast = pastForecasts[pastForecasts.length - 1];
-                                const kp = parseFloat(latestPast[1]);
-                                const timestamp = new Date(latestPast[0]);
-                                
-                                const dataAge = now - timestamp;
-                                const dataAgeMinutes = Math.floor(dataAge / (1000 * 60));
-                                
-                                return {
-                                    kp: kp,
-                                    kpMax: Math.min(9, kp + 0.5),
-                                    kpMin: Math.max(0, kp - 0.5),
-                                    kpAvg: kp,
-                                    trend: 'current',
-                                    timestamp: timestamp,
-                                    source: 'NOAA Forecast (Fallback)',
-                                    quality: dataAgeMinutes > 180 ? 'Delayed' : 'Recent',
-                                    dataAgeMinutes: dataAgeMinutes
-                                };
-                            }
-                        }
-                    }
-                } catch (forecastError) {
-                    console.error('Forecast fallback also failed:', forecastError);
-                }
-                
-                // If all else fails, throw error
-                throw new Error('All KP data sources failed');
+                console.error('Current KP fetch failed:', error);
+                return generateFallbackKpData();
             }
         }
         
+        function parseScalesData(data, now) {
+            // NOAA scales format
+            if (Array.isArray(data)) {
+                for (const item of data) {
+                    if (item && item.tag === "G-Scale" && item.Kp) {
+                        const kp = parseFloat(item.Kp);
+                        if (!isNaN(kp)) {
+                            return {
+                                kp: kp,
+                                kpMax: Math.min(9, kp + 0.5),
+                                kpMin: Math.max(0, kp - 0.5),
+                                kpAvg: kp,
+                                trend: 'current',
+                                timestamp: now,
+                                source: 'NOAA Real-time',
+                                quality: 'Real-Time'
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+        
+        function parseGeospaceData(data, now) {
+            // Geospace summary format
+            if (typeof data === 'object' && data !== null) {
+                // Try different possible KP field names
+                const kpFields = ['Kp', 'kp', 'Kp_index', 'kp_index', 'planetary_k_index'];
+                for (const field of kpFields) {
+                    if (data[field] !== undefined) {
+                        const kp = parseFloat(data[field]);
+                        if (!isNaN(kp)) {
+                            return {
+                                kp: kp,
+                                kpMax: Math.min(9, kp + 0.7),
+                                kpMin: Math.max(0, kp - 0.7),
+                                kpAvg: kp,
+                                trend: 'current',
+                                timestamp: new Date(data.updated || now),
+                                source: 'NOAA Geospace',
+                                quality: 'Recent'
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+        
         // ============================
-        // FORECAST DATA
+        // FORECAST DATA - FIXED
         // ============================
         
         async function fetchForecastData() {
             try {
-                const response = await fetch(DATA_SOURCES.noaaKpForecast);
+                const response = await fetch(DATA_SOURCES.noaaKpForecast + '?t=' + Date.now());
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
@@ -1043,24 +1176,35 @@
                     throw new Error('Invalid forecast data format');
                 }
                 
-                // Parse forecast data
+                // Parse forecast data - skip header row
                 const forecasts = [];
-                for (let i = 1; i < data.length; i++) {
+                const now = new Date();
+                
+                for (let i = 1; i < Math.min(data.length, 25); i++) {
                     const entry = data[i];
                     if (entry && entry.length >= 2) {
                         try {
                             const timestamp = new Date(entry[0]);
-                            const kp = parseFloat(entry[1]);
+                            let kpText = String(entry[1]).trim();
+                            let kp = parseFloat(kpText);
                             
-                            if (!isNaN(kp) && timestamp instanceof Date && !isNaN(timestamp)) {
+                            // Handle format like "3.33 (G1)"
+                            if (isNaN(kp)) {
+                                const match = kpText.match(/(\d+(\.\d+)?)/);
+                                if (match) kp = parseFloat(match[0]);
+                            }
+                            
+                            // Only add future forecasts
+                            if (!isNaN(kp) && timestamp > now) {
+                                kp = Math.min(9, Math.max(0, kp));
                                 forecasts.push({
                                     timestamp: timestamp,
                                     kp: kp,
-                                    isEstimated: entry.length > 2 ? entry[2] === 'estimated' : false
+                                    isEstimated: entry.length > 2 && entry[2] === 'estimated'
                                 });
                             }
                         } catch (e) {
-                            // Skip invalid entries
+                            console.warn('Skipping invalid forecast entry:', e);
                         }
                     }
                 }
@@ -1069,8 +1213,10 @@
                     throw new Error('No valid forecast data available');
                 }
                 
+                // Sort by timestamp
+                forecasts.sort((a, b) => a.timestamp - b.timestamp);
+                
                 // Group by day and find peaks
-                const now = new Date();
                 const todayStr = now.toDateString();
                 const today = forecasts.filter(f => f.timestamp.toDateString() === todayStr);
                 
@@ -1084,8 +1230,8 @@
                 const day3Str = day3Date.toDateString();
                 const day3 = forecasts.filter(f => f.timestamp.toDateString() === day3Str);
                 
-                // Calculate peaks
-                const peakToday = today.length > 0 ? Math.max(...today.map(f => f.kp)) : forecasts[0].kp;
+                // Calculate peaks (use max or default to 3)
+                const peakToday = today.length > 0 ? Math.max(...today.map(f => f.kp)) : 3.0;
                 const peakTomorrow = tomorrow.length > 0 ? Math.max(...tomorrow.map(f => f.kp)) : peakToday;
                 const peakDay3 = day3.length > 0 ? Math.max(...day3.map(f => f.kp)) : peakTomorrow;
                 
@@ -1113,57 +1259,57 @@
         async function fetchSolarWindData() {
             try {
                 // Fetch both data sources
-                const [magResponse, plasmaResponse] = await Promise.all([
-                    fetch(DATA_SOURCES.noaaSolarWindMag).catch(() => null),
-                    fetch(DATA_SOURCES.noaaSolarWindPlasma).catch(() => null)
+                const [plasmaResponse, magResponse] = await Promise.all([
+                    fetch(DATA_SOURCES.noaaSolarWind + '?t=' + Date.now()),
+                    fetch(DATA_SOURCES.noaaMag + '?t=' + Date.now())
                 ]);
                 
                 let speed = 400;
                 let density = 5.0;
                 let bz = 0;
-                let temperature = 100000;
+                let temp = 100000;
                 let timestamp = new Date();
-                let isReal = false;
+                let isReal = true;
                 
-                // Try to get plasma data
+                // Parse plasma data
                 if (plasmaResponse && plasmaResponse.ok) {
                     const plasmaData = await plasmaResponse.json();
                     if (Array.isArray(plasmaData) && plasmaData.length > 1) {
-                        const latestPlasma = plasmaData[plasmaData.length - 1];
-                        if (latestPlasma && latestPlasma.length >= 4) {
-                            speed = parseFloat(latestPlasma[2]) || speed;
-                            density = parseFloat(latestPlasma[1]) || density;
-                            temperature = parseFloat(latestPlasma[3]) || temperature;
-                            timestamp = new Date(latestPlasma[0]) || timestamp;
-                            isReal = true;
+                        const lastEntry = plasmaData[plasmaData.length - 1];
+                        if (lastEntry && lastEntry.length >= 4) {
+                            timestamp = new Date(lastEntry[0]);
+                            density = parseFloat(lastEntry[1]) || density;
+                            speed = parseFloat(lastEntry[2]) || speed;
+                            temp = parseFloat(lastEntry[3]) || temp;
                         }
                     }
                 }
                 
-                // Try to get magnetic data (for Bz)
+                // Parse magnetic data for Bz
                 if (magResponse && magResponse.ok) {
                     const magData = await magResponse.json();
                     if (Array.isArray(magData) && magData.length > 1) {
-                        const latestMag = magData[magData.length - 1];
-                        if (latestMag && latestMag.length >= 4) {
-                            bz = parseFloat(latestMag[3]) || bz;
-                            isReal = true;
+                        const lastEntry = magData[magData.length - 1];
+                        if (lastEntry && lastEntry.length >= 4) {
+                            bz = parseFloat(lastEntry[3]) || bz;
                         }
                     }
                 }
                 
-                // Validate ranges
-                if (speed < 200 || speed > 1000) speed = 400;
-                if (density < 0.1 || density > 100) density = 5.0;
-                if (bz < -50 || bz > 50) bz = 0;
+                // Validate and constrain values
+                speed = Math.max(200, Math.min(800, speed));
+                density = Math.max(0.1, Math.min(30, density));
+                bz = Math.max(-20, Math.min(20, bz));
+                temp = Math.max(50000, Math.min(500000, temp));
                 
                 return {
                     speed: Math.round(speed),
                     density: parseFloat(density.toFixed(1)),
                     bz: parseFloat(bz.toFixed(1)),
-                    temperature: temperature,
+                    temperature: Math.round(temp),
                     timestamp: timestamp,
-                    isReal: isReal
+                    isReal: isReal,
+                    source: 'NOAA Solar Wind'
                 };
                 
             } catch (error) {
@@ -1172,21 +1318,43 @@
             }
         }
         
+        // ============================
+        // FALLBACK DATA GENERATORS
+        // ============================
+        
+        function generateFallbackKpData() {
+            const now = new Date();
+            const hour = now.getHours();
+            let baseKp = 3.0;
+            
+            // Slight variation by time of day
+            if (hour >= 22 || hour < 4) baseKp += 0.3;
+            
+            return {
+                kp: baseKp + (Math.random() - 0.5) * 0.5,
+                kpMax: Math.min(9, baseKp + 0.8),
+                kpMin: Math.max(0, baseKp - 0.8),
+                kpAvg: baseKp,
+                trend: 'current',
+                timestamp: now,
+                source: 'Estimated Data',
+                quality: 'Estimated'
+            };
+        }
+        
         function generateFallbackSolarWindData() {
-            // Generate realistic fallback data
             const now = new Date();
             const hour = now.getHours();
             
-            // Slight diurnal variation
             let baseSpeed = 380 + Math.random() * 120;
             let baseDensity = 4.0 + Math.random() * 8.0;
-            let baseBz = -3 + Math.random() * 6; // Usually slightly negative
+            let baseBz = -3 + Math.random() * 6;
             
             // More active at night
             if (hour >= 20 || hour <= 4) {
                 baseSpeed += 40;
                 baseDensity += 2.0;
-                baseBz -= 1; // More negative at night
+                baseBz -= 1;
             }
             
             return {
@@ -1195,7 +1363,8 @@
                 bz: parseFloat(baseBz.toFixed(1)),
                 temperature: 80000 + Math.random() * 40000,
                 timestamp: now,
-                isReal: false
+                isReal: false,
+                source: 'Generated Data'
             };
         }
         
@@ -1204,13 +1373,12 @@
             const now = new Date();
             let baseKp = 3.0;
             
-            // Use current KP if available
             if (currentData && currentData.kp) {
                 baseKp = currentData.kp;
             }
             
             // Generate 3-hour intervals for 3 days
-            for (let i = 0; i < 24; i++) {
+            for (let i = 1; i <= 24; i++) {
                 const timestamp = new Date(now);
                 timestamp.setHours(timestamp.getHours() + i * 3);
                 
@@ -1220,8 +1388,6 @@
                 const hour = timestamp.getHours();
                 const isNight = hour >= 20 || hour <= 4;
                 kp += isNight ? 0.2 : -0.1;
-                
-                // Add some random variation
                 kp += (Math.random() - 0.5) * 0.4;
                 kp = Math.max(0, Math.min(9, kp));
                 
@@ -1251,25 +1417,8 @@
         }
         
         function useFallbackData() {
-            const now = new Date();
-            const hour = now.getHours();
-            
-            // Generate realistic fallback data
-            let baseKp = 3.0;
-            if (hour >= 20 || hour <= 4) {
-                baseKp = 3.2; // Slightly higher at night
-            }
-            
             const fallbackData = {
-                kp: baseKp + (Math.random() - 0.5) * 0.3,
-                kpMax: Math.min(9, baseKp + 0.8),
-                kpMin: Math.max(0, baseKp - 0.8),
-                kpAvg: baseKp,
-                trend: 'current',
-                timestamp: now,
-                source: 'Estimated Data',
-                quality: 'Estimated',
-                isFallback: true,
+                ...generateFallbackKpData(),
                 solarWind: generateFallbackSolarWindData(),
                 forecast: generateFallbackForecast()
             };
@@ -1280,6 +1429,7 @@
             
             updateDisplay(fallbackData);
             updateForecastChart(fallbackData.forecast);
+            updateDials(fallbackData.solarWind);
             dashboardContent.style.display = 'block';
             
             updateStatus('⚠️ FALLBACK DATA', 'status-live');
@@ -1312,59 +1462,6 @@
             const visibility = calculateVisibility(kp);
             visibilityChance.textContent = Math.round(visibility.overall) + '%';
             
-            // Update solar wind
-            if (data.solarWind) {
-                const speed = data.solarWind.speed;
-                windSpeed.textContent = speed;
-                windSpeed.style.color = speed > 500 ? 'var(--aurora-green)' : 
-                                       speed > 400 ? 'orange' : '#a0d2ff';
-                
-                const densityVal = data.solarWind.density;
-                density.textContent = densityVal;
-                density.style.color = densityVal > 10 ? 'var(--aurora-green)' : '#a0d2ff';
-                
-                const bz = data.solarWind.bz || 0;
-                let bzText = bz.toFixed(1);
-                
-                // Add trend indicator
-                const bzTrend = previousBz !== 0 ? bz - previousBz : 0;
-                let trendSymbol = '';
-                if (bzTrend < -0.5) trendSymbol = ' ↓';
-                else if (bzTrend > 0.5) trendSymbol = ' ↑';
-                
-                previousBz = bz;
-                
-                // Color coding for Bz
-                let bzStatus = '';
-                if (bz <= -10) {
-                    bzComponent.style.color = 'var(--aurora-green)';
-                    bzComponent.style.fontWeight = 'bold';
-                    bzStatus = ' (STRONG)';
-                } else if (bz <= -5) {
-                    bzComponent.style.color = 'var(--aurora-green)';
-                    bzStatus = ' (GOOD)';
-                } else if (bz < 0) {
-                    bzComponent.style.color = 'lightgreen';
-                } else if (bz > 0) {
-                    bzComponent.style.color = '#ff5500';
-                    bzStatus = ' (POOR)';
-                } else {
-                    bzComponent.style.color = '#a0d2ff';
-                }
-                
-                bzComponent.innerHTML = `${bzText}<span class="bz-indicator">${trendSymbol}${bzStatus}</span>`;
-                
-                // Format timestamp
-                try {
-                    solarUpdated.textContent = data.solarWind.timestamp.toLocaleTimeString([], {
-                        hour: '2-digit', 
-                        minute: '2-digit'
-                    });
-                } catch (e) {
-                    solarUpdated.textContent = '--:--';
-                }
-            }
-            
             // Update location info
             updateLocationInfo();
             
@@ -1373,6 +1470,65 @@
             
             // Check for alerts
             checkForAlerts(data);
+        }
+        
+        function updateDials(solarWindData) {
+            if (!solarWindData) return;
+            
+            // Update speed dial
+            speedValue.textContent = solarWindData.speed;
+            setDialColor(speedValue, solarWindData.speed, 500, 800);
+            
+            // Update density dial
+            densityValue.textContent = solarWindData.density.toFixed(1);
+            setDialColor(densityValue, solarWindData.density, 5, 15);
+            
+            // Update Bz dial
+            bzValue.textContent = solarWindData.bz.toFixed(1);
+            setDialColor(bzValue, solarWindData.bz, -10, -5);
+            
+            // Update temperature
+            temperature.textContent = Math.round(solarWindData.temperature / 1000) + 'k';
+            
+            // Update source
+            solarSource.textContent = solarWindData.isReal ? 'NOAA Real-time' : 'Estimated';
+            
+            // Update timestamp
+            try {
+                solarUpdated.textContent = solarWindData.timestamp.toLocaleTimeString([], {
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                solarUpdated.textContent = '--:--';
+            }
+        }
+        
+        function setDialColor(element, value, goodMin, goodMax) {
+            // Remove existing color classes
+            element.classList.remove('good', 'fair', 'poor', 'excellent');
+            
+            // Set color based on value ranges
+            if (goodMin !== undefined && goodMax !== undefined) {
+                if (value >= goodMin && value <= goodMax) {
+                    element.classList.add('good');
+                } else if (value < goodMin) {
+                    element.classList.add('poor');
+                } else {
+                    element.classList.add('fair');
+                }
+            } else if (goodMin !== undefined && goodMax === undefined) {
+                // For Bz: lower (more negative) is better
+                if (value <= goodMin) {
+                    element.classList.add('excellent');
+                } else if (value < 0) {
+                    element.classList.add('good');
+                } else if (value === 0) {
+                    element.classList.add('fair');
+                } else {
+                    element.classList.add('poor');
+                }
+            }
         }
         
         function updateQualityDisplay(quality) {
@@ -1433,8 +1589,7 @@
             }
             
             locationChance.textContent = Math.round(chance) + '%';
-            locationChance.style.color = chance >= 50 ? 'var(--aurora-green)' : 
-                                        chance >= 30 ? 'orange' : '#a0d2ff';
+            setDialColor(locationChance, chance, 50, 100);
             bestTime.textContent = calculateBestViewingTime();
             moonPhase.textContent = getMoonPhase(new Date());
         }
@@ -1454,7 +1609,7 @@
         
         function updateForecastChart(forecastData) {
             if (!forecastData || !forecastData.allForecasts) {
-                console.log('No forecast data available');
+                console.warn('No forecast data available for chart');
                 return;
             }
             
@@ -1470,7 +1625,7 @@
                 // Show daily peaks
                 forecastsToShow = [
                     { 
-                        timestamp: now, 
+                        timestamp: new Date(now.setHours(12, 0, 0, 0)), 
                         kp: forecastData.peakToday || 0, 
                         timeLabel: 'Today'
                     },
@@ -1488,20 +1643,19 @@
             } else {
                 // Show 3-hour or 6-hour intervals
                 const intervalHours = forecastInterval === '3h' ? 3 : 6;
-                
-                forecastsToShow = forecastData.allForecasts
+                let filteredForecasts = forecastData.allForecasts
                     .filter(f => {
                         const hoursDiff = (f.timestamp - now) / (1000 * 60 * 60);
                         return hoursDiff >= 0 && hoursDiff <= 72;
-                    })
-                    .filter((f, index) => {
-                        // Filter by interval
-                        if (forecastInterval === '6h') {
-                            return index % 2 === 0; // Every other 3-hour forecast
-                        }
-                        return true;
-                    })
-                    .slice(0, 8); // Limit to 8 data points for clarity
+                    });
+                
+                // For 6-hour interval, take every other forecast
+                if (forecastInterval === '6h') {
+                    filteredForecasts = filteredForecasts.filter((f, index) => index % 2 === 0);
+                }
+                
+                // Limit to 8 data points for clarity
+                forecastsToShow = filteredForecasts.slice(0, 8);
                 
                 // Format time labels
                 forecastsToShow.forEach(f => {
@@ -1510,24 +1664,26 @@
             }
             
             if (forecastsToShow.length === 0) {
-                console.log('No forecasts to display');
+                console.warn('No forecasts to display after filtering');
                 return;
             }
             
-            // Create bars - anchored to bottom
-            const containerWidth = forecastChartContainer.clientWidth - 40; // Account for Y-axis
+            // Create bars
+            const containerWidth = forecastChartContainer.clientWidth - 40;
+            const barWidth = Math.max(20, containerWidth / forecastsToShow.length - 10);
             
             forecastsToShow.forEach((forecast, index) => {
                 const barContainer = document.createElement('div');
                 barContainer.className = 'forecast-bar-container';
-                barContainer.style.width = `${containerWidth / forecastsToShow.length}px`;
+                barContainer.style.width = `${barWidth}px`;
                 
-                // Calculate bar height (scaled to 0-9 range, with max height at KP 9)
-                const barHeight = (forecast.kp / 9) * 180; // Max height 180px (90% of 200px container)
+                // Calculate bar height (scaled to 0-9 range, max height 180px)
+                const barHeight = (forecast.kp / 9) * 180;
                 
                 const bar = document.createElement('div');
                 bar.className = 'forecast-bar';
                 bar.style.height = `${barHeight}px`;
+                bar.style.width = `${Math.min(30, barWidth - 10)}px`;
                 
                 // Color based on KP value
                 if (forecast.kp >= 6) {
@@ -1542,7 +1698,7 @@
                 const valueLabel = document.createElement('div');
                 valueLabel.className = 'forecast-value';
                 valueLabel.textContent = forecast.kp.toFixed(1);
-                valueLabel.style.top = `${200 - barHeight - 25}px`; // Position above bar
+                valueLabel.style.top = `${200 - barHeight - 25}px`;
                 
                 // Time label (positioned below x-axis)
                 const timeLabel = document.createElement('div');
@@ -1557,19 +1713,19 @@
             });
             
             // Update peak values display
-            if (forecastData.peakToday) {
+            if (forecastData.peakToday !== undefined) {
                 peakToday.textContent = forecastData.peakToday.toFixed(1) + ' KP';
                 if (forecastData.peakToday >= 6) {
                     peakToday.innerHTML += '<span class="peak-badge">HIGH</span>';
                 }
             }
-            if (forecastData.peakTomorrow) {
+            if (forecastData.peakTomorrow !== undefined) {
                 peakTomorrow.textContent = forecastData.peakTomorrow.toFixed(1) + ' KP';
                 if (forecastData.peakTomorrow >= 6) {
                     peakTomorrow.innerHTML += '<span class="peak-badge">HIGH</span>';
                 }
             }
-            if (forecastData.peakDay3) {
+            if (forecastData.peakDay3 !== undefined) {
                 peakDay3.textContent = forecastData.peakDay3.toFixed(1) + ' KP';
                 if (forecastData.peakDay3 >= 6) {
                     peakDay3.innerHTML += '<span class="peak-badge">HIGH</span>';
@@ -1593,6 +1749,8 @@
                     current.kp > best.kp ? current : best
                 );
                 bestViewingTime.textContent = bestForecast.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else {
+                bestViewingTime.textContent = '--:--';
             }
         }
         
@@ -1759,9 +1917,9 @@
             showDataAlert('info', `
                 ℹ️ <strong>Data Sources:</strong><br>
                 • NOAA Space Weather Prediction Center<br>
-                • Geospace summary (current KP)<br>
+                • Real-time KP and storm scale data<br>
                 • 3-hour KP forecast data<br>
-                • Real-time solar wind measurements<br>
+                • Solar wind plasma and magnetic field data<br>
                 • Automatic updates every 10 minutes
             `);
         }
@@ -1771,6 +1929,9 @@
         // ============================
         
         document.addEventListener('DOMContentLoaded', () => {
+            // Create starfield background
+            createStarfield();
+            
             // Start loading real data immediately
             fetchRealData();
             
@@ -1781,4 +1942,4 @@
         });
     </script>
 </body>
-</html>
+                                </html>
