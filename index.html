@@ -300,6 +300,122 @@
             margin-top: 5px;
         }
         
+        /* Cloud Cover Visualization */
+        .cloud-cover-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .sky-visualization {
+            width: 200px;
+            height: 100px;
+            margin: 0 auto 15px;
+            border-radius: 100px 100px 0 0;
+            background: linear-gradient(to bottom, #051423, #1a3b6e);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+        }
+        
+        .horizon-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .aurora-layer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(to top, 
+                rgba(0, 255, 170, 0) 0%,
+                rgba(0, 255, 170, 0.3) 50%,
+                rgba(0, 210, 255, 0.1) 100%);
+            border-radius: 100px 100px 0 0;
+            opacity: 0;
+            transition: opacity 1s ease, height 1s ease;
+        }
+        
+        .cloud-percentage {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        /* Sky Coverage Visualization */
+        .sky-coverage-container {
+            margin: 20px 0;
+        }
+        
+        .coverage-meter {
+            height: 20px;
+            background: linear-gradient(90deg, 
+                #003366 0%, 
+                #0066cc 33%, 
+                var(--aurora-blue) 66%, 
+                var(--aurora-green) 100%);
+            border-radius: 10px;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coverage-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+        
+        .coverage-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #a0d2ff;
+        }
+        
+        /* Ideal Time Display */
+        .ideal-time-display {
+            background: rgba(0, 210, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+        }
+        
+        .ideal-time-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--aurora-green);
+            margin: 5px 0;
+        }
+        
+        .ideal-time-label {
+            color: #a0d2ff;
+            font-size: 0.9rem;
+        }
+        
+        .ideal-time-details {
+            font-size: 0.85rem;
+            color: #8899aa;
+            margin-top: 8px;
+        }
+        
         .data-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -600,6 +716,11 @@
         .fair { color: orange !important; }
         .poor { color: #ff5500 !important; }
         .excellent { color: var(--aurora-blue) !important; }
+        
+        /* Weather status colors */
+        .weather-good { color: var(--aurora-green); }
+        .weather-fair { color: orange; }
+        .weather-poor { color: #ff5500; }
     </style>
 </head>
 <body>
@@ -693,6 +814,50 @@
                         </div>
                     </div>
                     
+                    <!-- Ideal Viewing Time Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span>⏰</span> Ideal Viewing Time
+                            </div>
+                        </div>
+                        
+                        <div class="ideal-time-display">
+                            <div class="ideal-time-label">Tonight's Best Viewing</div>
+                            <div class="ideal-time-value" id="idealViewingTime">--:--</div>
+                            <div class="ideal-time-details" id="idealTimeDetails">
+                                Based on aurora strength during night hours
+                            </div>
+                        </div>
+                        
+                        <div class="sky-coverage-container">
+                            <div class="data-label">Estimated Sky Coverage</div>
+                            <div class="coverage-meter">
+                                <div class="coverage-fill" id="skyCoverageFill"></div>
+                            </div>
+                            <div class="coverage-labels">
+                                <span>Horizon Only</span>
+                                <span id="skyCoverageValue">--%</span>
+                                <span>Overhead</span>
+                            </div>
+                        </div>
+                        
+                        <div class="data-grid">
+                            <div class="data-item">
+                                <div class="data-label">Peak KP Tonight</div>
+                                <div class="data-value" id="tonightPeakKp">--</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Duration</div>
+                                <div class="data-value" id="auroraDuration">-- hrs</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Intensity</div>
+                                <div class="data-value" id="auroraIntensity">Low</div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Solar Wind with Simple Dials -->
                     <div class="card">
                         <div class="card-header">
@@ -755,6 +920,43 @@
                         </div>
                     </div>
                     
+                    <!-- Weather & Cloud Cover -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span>☁️</span> Weather & Cloud Cover
+                            </div>
+                        </div>
+                        
+                        <div class="cloud-cover-container">
+                            <div class="sky-visualization" id="skyVisualization">
+                                <div class="horizon-line"></div>
+                                <div class="aurora-layer" id="auroraLayer"></div>
+                                <!-- Clouds will be dynamically added -->
+                            </div>
+                            <div class="cloud-percentage" id="cloudPercentage">--% Cloud Cover</div>
+                        </div>
+                        
+                        <div class="data-grid">
+                            <div class="data-item">
+                                <div class="data-label">Viewing Conditions</div>
+                                <div class="data-value" id="viewingConditions">--</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Cloud Forecast</div>
+                                <div class="data-value" id="cloudForecast">--%</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Tonight's Weather</div>
+                                <div class="data-value" id="tonightWeather">--</div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-label">Updated</div>
+                                <div class="data-value" id="weatherUpdated">--:--</div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Australian Forecast -->
                     <div class="card">
                         <div class="card-header">
@@ -769,6 +971,19 @@
                             <div class="tab" onclick="selectLocation('west-aus')">Western Australia</div>
                             <div class="tab" onclick="selectLocation('nsw')">NSW</div>
                         </div>
+                        
+                        <div class="sky-coverage-container">
+                            <div class="data-label">Visibility Area</div>
+                            <div class="coverage-meter">
+                                <div class="coverage-fill" id="visibilityCoverageFill"></div>
+                            </div>
+                            <div class="coverage-labels">
+                                <span>Southern Coast</span>
+                                <span id="visibilityCoverageValue">--%</span>
+                                <span>Inland</span>
+                            </div>
+                        </div>
+                        
                         <div class="data-grid">
                             <div class="data-item">
                                 <div class="data-label">Current Location</div>
@@ -908,19 +1123,48 @@
 
     <script>
         // ============================
-        // REAL DATA SOURCES - FIXED
+        // REAL DATA SOURCES
         // ============================
         const DATA_SOURCES = {
-            // Current conditions (alternative sources)
             noaaScales: 'https://services.swpc.noaa.gov/products/noaa-scales.json',
             noaaGeospace: 'https://services.swpc.noaa.gov/products/summary/geospace.json',
-            
-            // Forecast data
             noaaKpForecast: 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json',
-            
-            // Solar wind data
             noaaSolarWind: 'https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json',
             noaaMag: 'https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json'
+        };
+        
+        // Australian locations weather data (simulated - in real app, would use weather API)
+        const AUSTRALIAN_WEATHER = {
+            tasmania: { 
+                cloudCover: 30, 
+                conditions: 'Partly Cloudy',
+                temp: 12,
+                wind: 15 
+            },
+            victoria: { 
+                cloudCover: 40, 
+                conditions: 'Mostly Clear',
+                temp: 15,
+                wind: 20 
+            },
+            'south-aus': { 
+                cloudCover: 20, 
+                conditions: 'Clear',
+                temp: 18,
+                wind: 25 
+            },
+            'west-aus': { 
+                cloudCover: 60, 
+                conditions: 'Cloudy',
+                temp: 22,
+                wind: 18 
+            },
+            nsw: { 
+                cloudCover: 50, 
+                conditions: 'Partly Cloudy',
+                temp: 17,
+                wind: 22 
+            }
         };
         
         // DOM Elements
@@ -964,6 +1208,24 @@
         const warningAlert = document.getElementById('warningAlert');
         const dashboardContent = document.getElementById('dashboardContent');
         
+        // New elements for added features
+        const idealViewingTime = document.getElementById('idealViewingTime');
+        const idealTimeDetails = document.getElementById('idealTimeDetails');
+        const skyCoverageFill = document.getElementById('skyCoverageFill');
+        const skyCoverageValue = document.getElementById('skyCoverageValue');
+        const tonightPeakKp = document.getElementById('tonightPeakKp');
+        const auroraDuration = document.getElementById('auroraDuration');
+        const auroraIntensity = document.getElementById('auroraIntensity');
+        const skyVisualization = document.getElementById('skyVisualization');
+        const auroraLayer = document.getElementById('auroraLayer');
+        const cloudPercentage = document.getElementById('cloudPercentage');
+        const viewingConditions = document.getElementById('viewingConditions');
+        const cloudForecast = document.getElementById('cloudForecast');
+        const tonightWeather = document.getElementById('tonightWeather');
+        const weatherUpdated = document.getElementById('weatherUpdated');
+        const visibilityCoverageFill = document.getElementById('visibilityCoverageFill');
+        const visibilityCoverageValue = document.getElementById('visibilityCoverageValue');
+        
         // App State
         let currentData = null;
         let forecastData = null;
@@ -997,6 +1259,177 @@
                 
                 starsContainer.appendChild(star);
             }
+        }
+        
+        // ============================
+        // CLOUD COVER VISUALIZATION
+        // ============================
+        function createCloudVisualization(cloudCoverPercent) {
+            // Clear existing clouds
+            const existingClouds = skyVisualization.querySelectorAll('.cloud');
+            existingClouds.forEach(cloud => cloud.remove());
+            
+            // Calculate number of clouds based on cloud cover percentage
+            const cloudCount = Math.floor((cloudCoverPercent / 100) * 15);
+            
+            for (let i = 0; i < cloudCount; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                
+                // Random cloud size
+                const size = 20 + Math.random() * 40;
+                cloud.style.width = `${size}px`;
+                cloud.style.height = `${size * 0.6}px`;
+                
+                // Random position
+                cloud.style.left = `${Math.random() * 180}px`;
+                cloud.style.top = `${20 + Math.random() * 60}px`;
+                
+                // Random opacity
+                cloud.style.opacity = 0.5 + Math.random() * 0.5;
+                
+                // Some clouds are fluffy with multiple circles
+                if (Math.random() > 0.5) {
+                    cloud.style.borderRadius = '50%';
+                } else {
+                    cloud.style.borderRadius = `${size}px`;
+                }
+                
+                skyVisualization.appendChild(cloud);
+            }
+            
+            // Update aurora layer visibility based on KP
+            if (currentData && currentData.kp) {
+                const kp = currentData.kp;
+                const auroraOpacity = Math.min(0.8, (kp - 4) * 0.2);
+                auroraLayer.style.opacity = Math.max(0, auroraOpacity);
+                
+                // Aurora height based on KP (higher KP = more sky coverage)
+                const auroraHeight = 30 + (kp * 5);
+                auroraLayer.style.height = `${Math.min(80, auroraHeight)}%`;
+            }
+        }
+        
+        // ============================
+        // SKY COVERAGE CALCULATION
+        // ============================
+        function calculateSkyCoverage(kp, bz) {
+            // Sky coverage increases with higher KP and more negative Bz
+            let baseCoverage = 0;
+            
+            if (kp >= 8) baseCoverage = 80;
+            else if (kp >= 7) baseCoverage = 60;
+            else if (kp >= 6) baseCoverage = 40;
+            else if (kp >= 5) baseCoverage = 20;
+            else if (kp >= 4) baseCoverage = 10;
+            
+            // Adjust for Bz (more negative = better coverage)
+            if (bz < -10) baseCoverage += 20;
+            else if (bz < -5) baseCoverage += 10;
+            else if (bz > 5) baseCoverage = Math.max(0, baseCoverage - 10);
+            
+            // Cap at 95%
+            return Math.min(95, baseCoverage);
+        }
+        
+        // ============================
+        // IDEAL VIEWING TIME CALCULATION
+        // ============================
+        function calculateIdealViewingTime(forecastData) {
+            if (!forecastData || !forecastData.allForecasts) {
+                return { time: '--:--', kp: 0, duration: 0 };
+            }
+            
+            const now = new Date();
+            const tonightStart = new Date(now);
+            tonightStart.setHours(20, 0, 0, 0); // 8 PM
+            if (tonightStart < now) {
+                tonightStart.setDate(tonightStart.getDate() + 1);
+            }
+            
+            const tonightEnd = new Date(tonightStart);
+            tonightEnd.setHours(2, 0, 0, 0); // 2 AM next day
+            tonightEnd.setDate(tonightEnd.getDate() + 1);
+            
+            // Find forecasts during tonight's viewing window
+            const tonightForecasts = forecastData.allForecasts.filter(f => {
+                return f.timestamp >= tonightStart && f.timestamp <= tonightEnd;
+            });
+            
+            if (tonightForecasts.length === 0) {
+                return { time: '22:00', kp: 0, duration: 4 };
+            }
+            
+            // Find peak KP during tonight
+            let peakKp = 0;
+            let peakTime = null;
+            
+            tonightForecasts.forEach(forecast => {
+                if (forecast.kp > peakKp) {
+                    peakKp = forecast.kp;
+                    peakTime = forecast.timestamp;
+                }
+            });
+            
+            // Calculate duration of KP >= 4
+            const activeForecasts = tonightForecasts.filter(f => f.kp >= 4);
+            const durationHours = activeForecasts.length * 3; // Each forecast is 3 hours
+            
+            return {
+                time: peakTime ? peakTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '22:00',
+                kp: peakKp,
+                duration: Math.min(6, durationHours)
+            };
+        }
+        
+        // ============================
+        // WEATHER CONDITIONS
+        // ============================
+        function updateWeatherConditions(location) {
+            const weather = AUSTRALIAN_WEATHER[location] || AUSTRALIAN_WEATHER.tasmania;
+            const cloudCover = weather.cloudCover;
+            
+            // Update cloud visualization
+            createCloudVisualization(cloudCover);
+            
+            // Update cloud percentage display
+            cloudPercentage.textContent = `${cloudCover}% Cloud Cover`;
+            cloudPercentage.className = `cloud-percentage ${getCloudCoverClass(cloudCover)}`;
+            
+            // Update viewing conditions
+            viewingConditions.textContent = weather.conditions;
+            viewingConditions.className = `data-value ${getViewingConditionsClass(cloudCover)}`;
+            
+            // Update forecast (simulate some variation)
+            const forecastCloud = Math.min(100, Math.max(0, cloudCover + (Math.random() * 20 - 10)));
+            cloudForecast.textContent = `${Math.round(forecastCloud)}%`;
+            
+            // Tonight's weather summary
+            tonightWeather.textContent = getWeatherSummary(cloudCover, weather.temp);
+            
+            // Update timestamp
+            weatherUpdated.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function getCloudCoverClass(cloudCover) {
+            if (cloudCover < 30) return 'weather-good';
+            if (cloudCover < 60) return 'weather-fair';
+            return 'weather-poor';
+        }
+        
+        function getViewingConditionsClass(cloudCover) {
+            if (cloudCover < 20) return 'excellent';
+            if (cloudCover < 40) return 'good';
+            if (cloudCover < 60) return 'fair';
+            return 'poor';
+        }
+        
+        function getWeatherSummary(cloudCover, temp) {
+            if (cloudCover < 20) return 'Excellent (Clear)';
+            if (cloudCover < 40) return 'Good (Few Clouds)';
+            if (cloudCover < 60) return 'Fair (Partly Cloudy)';
+            if (cloudCover < 80) return 'Poor (Cloudy)';
+            return 'Very Poor (Overcast)';
         }
         
         // ============================
@@ -1038,6 +1471,8 @@
                 updateDisplay(combinedData);
                 updateForecastChart(forecastDataResult);
                 updateDials(solarWindData);
+                updateIdealViewingTime(forecastDataResult);
+                updateWeatherConditions(selectedLocation);
                 
                 // Show success
                 dashboardContent.style.display = 'block';
@@ -1074,7 +1509,7 @@
         }
         
         // ============================
-        // CURRENT KP DATA - FIXED
+        // CURRENT KP DATA
         // ============================
         
         async function fetchCurrentKpData() {
@@ -1089,7 +1524,7 @@
                 
                 for (const endpoint of endpoints) {
                     try {
-                        const response = await fetch(endpoint.url + '?t=' + Date.now()); // Cache bust
+                        const response = await fetch(endpoint.url + '?t=' + Date.now());
                         if (!response.ok) continue;
                         
                         const data = await response.json();
@@ -1113,7 +1548,6 @@
         }
         
         function parseScalesData(data, now) {
-            // NOAA scales format
             if (Array.isArray(data)) {
                 for (const item of data) {
                     if (item && item.tag === "G-Scale" && item.Kp) {
@@ -1137,9 +1571,7 @@
         }
         
         function parseGeospaceData(data, now) {
-            // Geospace summary format
             if (typeof data === 'object' && data !== null) {
-                // Try different possible KP field names
                 const kpFields = ['Kp', 'kp', 'Kp_index', 'kp_index', 'planetary_k_index'];
                 for (const field of kpFields) {
                     if (data[field] !== undefined) {
@@ -1163,7 +1595,7 @@
         }
         
         // ============================
-        // FORECAST DATA - FIXED
+        // FORECAST DATA
         // ============================
         
         async function fetchForecastData() {
@@ -1176,7 +1608,7 @@
                     throw new Error('Invalid forecast data format');
                 }
                 
-                // Parse forecast data - skip header row
+                // Parse forecast data
                 const forecasts = [];
                 const now = new Date();
                 
@@ -1188,13 +1620,11 @@
                             let kpText = String(entry[1]).trim();
                             let kp = parseFloat(kpText);
                             
-                            // Handle format like "3.33 (G1)"
                             if (isNaN(kp)) {
                                 const match = kpText.match(/(\d+(\.\d+)?)/);
                                 if (match) kp = parseFloat(match[0]);
                             }
                             
-                            // Only add future forecasts
                             if (!isNaN(kp) && timestamp > now) {
                                 kp = Math.min(9, Math.max(0, kp));
                                 forecasts.push({
@@ -1213,7 +1643,6 @@
                     throw new Error('No valid forecast data available');
                 }
                 
-                // Sort by timestamp
                 forecasts.sort((a, b) => a.timestamp - b.timestamp);
                 
                 // Group by day and find peaks
@@ -1230,7 +1659,6 @@
                 const day3Str = day3Date.toDateString();
                 const day3 = forecasts.filter(f => f.timestamp.toDateString() === day3Str);
                 
-                // Calculate peaks (use max or default to 3)
                 const peakToday = today.length > 0 ? Math.max(...today.map(f => f.kp)) : 3.0;
                 const peakTomorrow = tomorrow.length > 0 ? Math.max(...tomorrow.map(f => f.kp)) : peakToday;
                 const peakDay3 = day3.length > 0 ? Math.max(...day3.map(f => f.kp)) : peakTomorrow;
@@ -1253,12 +1681,11 @@
         }
         
         // ============================
-        // SOLAR WIND DATA - FIXED
+        // SOLAR WIND DATA
         // ============================
         
         async function fetchSolarWindData() {
             try {
-                // Fetch both data sources
                 const [plasmaResponse, magResponse] = await Promise.all([
                     fetch(DATA_SOURCES.noaaSolarWind + '?t=' + Date.now()),
                     fetch(DATA_SOURCES.noaaMag + '?t=' + Date.now())
@@ -1271,7 +1698,6 @@
                 let timestamp = new Date();
                 let isReal = true;
                 
-                // Parse plasma data
                 if (plasmaResponse && plasmaResponse.ok) {
                     const plasmaData = await plasmaResponse.json();
                     if (Array.isArray(plasmaData) && plasmaData.length > 1) {
@@ -1285,7 +1711,6 @@
                     }
                 }
                 
-                // Parse magnetic data for Bz
                 if (magResponse && magResponse.ok) {
                     const magData = await magResponse.json();
                     if (Array.isArray(magData) && magData.length > 1) {
@@ -1296,7 +1721,6 @@
                     }
                 }
                 
-                // Validate and constrain values
                 speed = Math.max(200, Math.min(800, speed));
                 density = Math.max(0.1, Math.min(30, density));
                 bz = Math.max(-20, Math.min(20, bz));
@@ -1327,7 +1751,6 @@
             const hour = now.getHours();
             let baseKp = 3.0;
             
-            // Slight variation by time of day
             if (hour >= 22 || hour < 4) baseKp += 0.3;
             
             return {
@@ -1350,7 +1773,6 @@
             let baseDensity = 4.0 + Math.random() * 8.0;
             let baseBz = -3 + Math.random() * 6;
             
-            // More active at night
             if (hour >= 20 || hour <= 4) {
                 baseSpeed += 40;
                 baseDensity += 2.0;
@@ -1377,14 +1799,12 @@
                 baseKp = currentData.kp;
             }
             
-            // Generate 3-hour intervals for 3 days
             for (let i = 1; i <= 24; i++) {
                 const timestamp = new Date(now);
                 timestamp.setHours(timestamp.getHours() + i * 3);
                 
                 let kp = baseKp;
                 
-                // Add realistic variation
                 const hour = timestamp.getHours();
                 const isNight = hour >= 20 || hour <= 4;
                 kp += isNight ? 0.2 : -0.1;
@@ -1398,7 +1818,6 @@
                 });
             }
             
-            // Calculate peaks
             const peakToday = Math.max(...forecasts.slice(0, 8).map(f => f.kp));
             const peakTomorrow = Math.max(...forecasts.slice(8, 16).map(f => f.kp));
             const peakDay3 = Math.max(...forecasts.slice(16, 24).map(f => f.kp));
@@ -1430,6 +1849,8 @@
             updateDisplay(fallbackData);
             updateForecastChart(fallbackData.forecast);
             updateDials(fallbackData.solarWind);
+            updateIdealViewingTime(fallbackData.forecast);
+            updateWeatherConditions(selectedLocation);
             dashboardContent.style.display = 'block';
             
             updateStatus('⚠️ FALLBACK DATA', 'status-live');
@@ -1504,11 +1925,48 @@
             }
         }
         
+        function updateIdealViewingTime(forecastData) {
+            const ideal = calculateIdealViewingTime(forecastData);
+            
+            idealViewingTime.textContent = ideal.time;
+            tonightPeakKp.textContent = ideal.kp.toFixed(1);
+            auroraDuration.textContent = `${ideal.duration} hrs`;
+            
+            // Set intensity based on peak KP
+            if (ideal.kp >= 6) {
+                auroraIntensity.textContent = 'High';
+                auroraIntensity.className = 'data-value excellent';
+            } else if (ideal.kp >= 5) {
+                auroraIntensity.textContent = 'Medium';
+                auroraIntensity.className = 'data-value good';
+            } else if (ideal.kp >= 4) {
+                auroraIntensity.textContent = 'Low';
+                auroraIntensity.className = 'data-value fair';
+            } else {
+                auroraIntensity.textContent = 'Very Low';
+                auroraIntensity.className = 'data-value poor';
+            }
+            
+            // Update sky coverage
+            if (currentData && currentData.solarWind) {
+                const coverage = calculateSkyCoverage(ideal.kp, currentData.solarWind.bz);
+                skyCoverageFill.style.width = `${coverage}%`;
+                skyCoverageValue.textContent = `${coverage}%`;
+                
+                // Update details
+                if (ideal.kp >= 5 && coverage > 30) {
+                    idealTimeDetails.textContent = 'Excellent viewing conditions expected!';
+                } else if (ideal.kp >= 4) {
+                    idealTimeDetails.textContent = 'Good chance of visible aurora';
+                } else {
+                    idealTimeDetails.textContent = 'Aurora may be faint or horizon-only';
+                }
+            }
+        }
+        
         function setDialColor(element, value, goodMin, goodMax) {
-            // Remove existing color classes
             element.classList.remove('good', 'fair', 'poor', 'excellent');
             
-            // Set color based on value ranges
             if (goodMin !== undefined && goodMax !== undefined) {
                 if (value >= goodMin && value <= goodMax) {
                     element.classList.add('good');
@@ -1518,7 +1976,6 @@
                     element.classList.add('fair');
                 }
             } else if (goodMin !== undefined && goodMax === undefined) {
-                // For Bz: lower (more negative) is better
                 if (value <= goodMin) {
                     element.classList.add('excellent');
                 } else if (value < 0) {
@@ -1534,7 +1991,6 @@
         function updateQualityDisplay(quality) {
             qualityText.textContent = quality;
             
-            // Set color based on quality
             switch(quality) {
                 case 'Real-Time':
                     qualityIndicator.className = 'quality-indicator quality-realtime';
@@ -1592,6 +2048,11 @@
             setDialColor(locationChance, chance, 50, 100);
             bestTime.textContent = calculateBestViewingTime();
             moonPhase.textContent = getMoonPhase(new Date());
+            
+            // Update visibility coverage
+            const coverage = Math.min(95, chance * 0.8);
+            visibilityCoverageFill.style.width = `${coverage}%`;
+            visibilityCoverageValue.textContent = `${coverage}%`;
         }
         
         function selectLocation(location) {
@@ -1605,13 +2066,11 @@
             
             // Update location info
             updateLocationInfo();
+            updateWeatherConditions(location);
         }
         
         function updateForecastChart(forecastData) {
-            if (!forecastData || !forecastData.allForecasts) {
-                console.warn('No forecast data available for chart');
-                return;
-            }
+            if (!forecastData || !forecastData.allForecasts) return;
             
             // Clear existing chart
             const existingBars = forecastChartContainer.querySelectorAll('.forecast-bar-container');
@@ -1620,9 +2079,7 @@
             let forecastsToShow = [];
             const now = new Date();
             
-            // Filter forecasts based on selected interval
             if (forecastInterval === 'daily') {
-                // Show daily peaks
                 forecastsToShow = [
                     { 
                         timestamp: new Date(now.setHours(12, 0, 0, 0)), 
@@ -1641,7 +2098,6 @@
                     }
                 ];
             } else {
-                // Show 3-hour or 6-hour intervals
                 const intervalHours = forecastInterval === '3h' ? 3 : 6;
                 let filteredForecasts = forecastData.allForecasts
                     .filter(f => {
@@ -1649,26 +2105,19 @@
                         return hoursDiff >= 0 && hoursDiff <= 72;
                     });
                 
-                // For 6-hour interval, take every other forecast
                 if (forecastInterval === '6h') {
                     filteredForecasts = filteredForecasts.filter((f, index) => index % 2 === 0);
                 }
                 
-                // Limit to 8 data points for clarity
                 forecastsToShow = filteredForecasts.slice(0, 8);
                 
-                // Format time labels
                 forecastsToShow.forEach(f => {
                     f.timeLabel = f.timestamp.toLocaleTimeString([], {hour: '2-digit'});
                 });
             }
             
-            if (forecastsToShow.length === 0) {
-                console.warn('No forecasts to display after filtering');
-                return;
-            }
+            if (forecastsToShow.length === 0) return;
             
-            // Create bars
             const containerWidth = forecastChartContainer.clientWidth - 40;
             const barWidth = Math.max(20, containerWidth / forecastsToShow.length - 10);
             
@@ -1677,7 +2126,6 @@
                 barContainer.className = 'forecast-bar-container';
                 barContainer.style.width = `${barWidth}px`;
                 
-                // Calculate bar height (scaled to 0-9 range, max height 180px)
                 const barHeight = (forecast.kp / 9) * 180;
                 
                 const bar = document.createElement('div');
@@ -1685,7 +2133,6 @@
                 bar.style.height = `${barHeight}px`;
                 bar.style.width = `${Math.min(30, barWidth - 10)}px`;
                 
-                // Color based on KP value
                 if (forecast.kp >= 6) {
                     bar.style.background = 'linear-gradient(to top, #ff5500, var(--aurora-green))';
                 } else if (forecast.kp >= 5) {
@@ -1694,13 +2141,11 @@
                     bar.style.background = 'linear-gradient(to top, #00aaff, var(--aurora-blue))';
                 }
                 
-                // Value label (positioned above the bar)
                 const valueLabel = document.createElement('div');
                 valueLabel.className = 'forecast-value';
                 valueLabel.textContent = forecast.kp.toFixed(1);
                 valueLabel.style.top = `${200 - barHeight - 25}px`;
                 
-                // Time label (positioned below x-axis)
                 const timeLabel = document.createElement('div');
                 timeLabel.className = 'forecast-time';
                 timeLabel.textContent = forecast.timeLabel || 
@@ -1712,7 +2157,6 @@
                 forecastChartContainer.appendChild(barContainer);
             });
             
-            // Update peak values display
             if (forecastData.peakToday !== undefined) {
                 peakToday.textContent = forecastData.peakToday.toFixed(1) + ' KP';
                 if (forecastData.peakToday >= 6) {
@@ -1732,7 +2176,6 @@
                 }
             }
             
-            // Determine best viewing time (highest KP during night hours)
             const nightForecasts = forecastsToShow.filter(f => {
                 const hour = f.timestamp.getHours();
                 return hour >= 20 || hour <= 4;
@@ -1744,7 +2187,6 @@
                 );
                 bestViewingTime.textContent = bestForecast.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             } else if (forecastsToShow.length > 0) {
-                // Fallback to highest KP overall
                 const bestForecast = forecastsToShow.reduce((best, current) => 
                     current.kp > best.kp ? current : best
                 );
@@ -1757,13 +2199,11 @@
         function selectForecastInterval(interval) {
             forecastInterval = interval;
             
-            // Update button states
             document.querySelectorAll('.interval-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
             
-            // Update chart
             if (forecastData) {
                 updateForecastChart(forecastData);
             }
@@ -1846,6 +2286,14 @@
                 alerts.push(`Bz ${data.solarWind.bz.toFixed(1)} nT - Northward Bz - Poor aurora conditions`);
             }
             
+            // Weather alerts
+            const weather = AUSTRALIAN_WEATHER[selectedLocation];
+            if (weather && weather.cloudCover > 80) {
+                alerts.push(`High cloud cover (${weather.cloudCover}%) - Poor viewing conditions`);
+            } else if (weather && weather.cloudCover < 30) {
+                alerts.push(`Low cloud cover (${weather.cloudCover}%) - Excellent viewing conditions!`);
+            }
+            
             // Forecast alerts
             if (forecastData) {
                 if (forecastData.peakToday >= 6) {
@@ -1920,6 +2368,7 @@
                 • Real-time KP and storm scale data<br>
                 • 3-hour KP forecast data<br>
                 • Solar wind plasma and magnetic field data<br>
+                • Weather conditions (simulated)<br>
                 • Automatic updates every 10 minutes
             `);
         }
@@ -1942,4 +2391,4 @@
         });
     </script>
 </body>
-                                </html>
+    </html>
