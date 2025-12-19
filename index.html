@@ -522,6 +522,103 @@
             color: #ff5500;
         }
         
+
+/* Tasmania Advantage Panel */
+.tasmania-advantage {
+    background: linear-gradient(135deg, 
+        rgba(0, 100, 200, 0.15), 
+        rgba(138, 43, 226, 0.15));
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    display: none;
+    animation: fadeIn 0.8s ease;
+}
+
+.tasmania-advantage::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        var(--aurora-green), 
+        var(--aurora-blue), 
+        var(--aurora-purple));
+}
+
+.tasmania-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: var(--aurora-blue);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.tasmania-icon {
+    font-size: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.tasmania-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tasmania-point-icon {
+    color: var(--aurora-green);
+    font-size: 1.1rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.tasmania-point strong {
+    color: white;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.tasmania-point span {
+    color: #a0d2ff;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.tasmania-tip {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(0, 210, 255, 0.1);
+    border-radius: 10px;
+    border-left: 4px solid var(--aurora-green);
+}
+
+.tasmania-tip strong {
+    color: var(--aurora-green);
+    display: block;
+    margin-bottom: 5px;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
         .forecast-interval-selector {
             display: flex;
             gap: 0.5rem;
@@ -916,13 +1013,13 @@
                                 <span>🇦🇺</span> Australian Visibility
                             </div>
                         </div>
-                        <div class="tab-container">
-                            <div class="tab active" onclick="selectLocation('tasmania')">Tasmania</div>
-                            <div class="tab" onclick="selectLocation('victoria')">Victoria</div>
-                            <div class="tab" onclick="selectLocation('south-aus')">South Australia</div>
-                            <div class="tab" onclick="selectLocation('west-aus')">Western Australia</div>
-                            <div class="tab" onclick="selectLocation('nsw')">NSW</div>
-                        </div>
+<div class="tab-container">
+    <div class="tab active" onclick="selectLocation('tasmania', event)">Tasmania</div>
+    <div class="tab" onclick="selectLocation('victoria', event)">Victoria</div>
+    <div class="tab" onclick="selectLocation('south-aus', event)">South Australia</div>
+    <div class="tab" onclick="selectLocation('west-aus', event)">Western Australia</div>
+    <div class="tab" onclick="selectLocation('nsw', event)">NSW</div>
+</div>
                         
                         <div class="sky-coverage-container">
                             <div class="data-label">Visibility Area</div>
@@ -956,6 +1053,43 @@
                         </div>
                     </div>
                     
+<!-- Tasmania Advantage Panel -->
+<div class="card tasmania-advantage" id="tasmaniaAdvantage">
+    <div class="tasmania-header">
+        <span class="tasmania-icon">📍</span>
+        The Tasmania Advantage
+    </div>
+    
+    <div class="tasmania-point">
+        <span class="tasmania-point-icon">⚡</span>
+        <div>
+            <strong>Prime Auroral Location</strong>
+            <span id="advantageLocationText">Tasmania is closer to the southern auroral oval than any other Australian state.</span>
+        </div>
+    </div>
+    
+    <div class="tasmania-point">
+        <span class="tasmania-point-icon">👁️</span>
+        <div>
+            <strong>Lower KP Threshold</strong>
+            <span id="advantageKpText">Visible auroras can occur here at KP levels as low as 3-4 during optimal conditions.</span>
+        </div>
+    </div>
+    
+    <div class="tasmania-point">
+        <span class="tasmania-point-icon">🌌</span>
+        <div>
+            <strong>Enhanced Visibility</strong>
+            <span id="advantageVisibilityText">Tonight's conditions give Tasmania a <span id="advantageBoostValue">30%</span> visibility boost compared to mainland locations.</span>
+        </div>
+    </div>
+    
+    <div class="tasmania-tip">
+        <strong>💡 Tonight's Tasmanian Tip:</strong>
+        <span id="tasmaniaTonightTip">Loading tonight's specific advice...</span>
+    </div>
+</div>
+
                     <!-- Forecast Chart -->
                     <div class="card">
                         <div class="card-header">
@@ -964,11 +1098,11 @@
                             </div>
                         </div>
                         
-                        <div class="forecast-interval-selector">
-                            <button class="interval-btn active" onclick="selectForecastInterval('3h')">3-Hour</button>
-                            <button class="interval-btn" onclick="selectForecastInterval('6h')">6-Hour</button>
-                            <button class="interval-btn" onclick="selectForecastInterval('daily')">Daily Peaks</button>
-                        </div>
+<div class="forecast-interval-selector">
+    <button class="interval-btn active" onclick="selectForecastInterval('3h', event)">3-Hour</button>
+    <button class="interval-btn" onclick="selectForecastInterval('6h', event)">6-Hour</button>
+    <button class="interval-btn" onclick="selectForecastInterval('daily', event)">Daily Peaks</button>
+</div>
                         
                         <!-- Chart Container with Y-axis -->
                         <div class="forecast-chart-container" id="forecastChartContainer">
@@ -1073,6 +1207,7 @@
         </div>
     </div>
 
+
 <script>
     // ============================
     // REAL DATA SOURCES - IMPROVED
@@ -1169,6 +1304,14 @@
     const visibilityCoverageFill = document.getElementById('visibilityCoverageFill');
     const visibilityCoverageValue = document.getElementById('visibilityCoverageValue');
     
+    // Tasmania Advantage elements - with null checks
+    const tasmaniaAdvantagePanel = document.getElementById('tasmaniaAdvantage');
+    const advantageLocationText = document.getElementById('advantageLocationText');
+    const advantageKpText = document.getElementById('advantageKpText');
+    const advantageBoostValue = document.getElementById('advantageBoostValue');
+    const advantageVisibilityText = document.getElementById('advantageVisibilityText');
+    const tasmaniaTonightTip = document.getElementById('tasmaniaTonightTip');
+    
     // App State
     let currentData = null;
     let forecastData = null;
@@ -1205,6 +1348,127 @@
     }
     
     // ============================
+    // TASMANIA ADVANTAGE FUNCTIONS
+    // ============================
+    
+    function updateTasmaniaAdvantage(data) {
+        if (!tasmaniaAdvantagePanel) return;
+        
+        if (selectedLocation !== 'tasmania') {
+            tasmaniaAdvantagePanel.style.display = 'none';
+            return;
+        }
+        
+        // Show the panel
+        tasmaniaAdvantagePanel.style.display = 'block';
+        
+        // Calculate Tasmania-specific metrics
+        const kp = data.kp || 0;
+        const bz = data.solarWind?.bz || 0;
+        const solarWindSpeed = data.solarWind?.speed || 400;
+        
+        // Update advantage points with real-time data
+        updateAdvantageTexts(kp, bz, solarWindSpeed, data);
+        
+        // Generate tonight's specific tip
+        generateTonightTip(kp, bz, solarWindSpeed);
+    }
+    
+    function updateAdvantageTexts(kp, bz, solarWindSpeed, data) {
+        // Safe updates for Tasmania advantage text elements
+        try {
+            if (advantageLocationText) {
+                const locationTexts = [
+                    "Tasmania's southern position puts you closest to the auroral oval.",
+                    "At -42° latitude, Tasmania is Australia's prime aurora viewing location.",
+                    "Your location is approximately 8-10° closer to the auroral oval than mainland capitals."
+                ];
+                advantageLocationText.textContent = locationTexts[Math.floor(Math.random() * locationTexts.length)];
+            }
+            
+            if (advantageKpText) {
+                let kpText = "";
+                const lowKpPossible = (kp >= 3.5 && bz < -8 && solarWindSpeed > 550);
+                
+                if (lowKpPossible) {
+                    kpText = `With current strong solar wind (Bz: ${bz.toFixed(1)} nT), aurora may be visible even at KP${kp.toFixed(1)}.`;
+                } else if (kp >= 4) {
+                    kpText = `At KP${kp.toFixed(1)}, Tasmania has visible aurora when mainland locations see only horizon glows.`;
+                } else {
+                    kpText = "Visible auroras can occur here at KP levels as low as 3-4 during optimal solar wind conditions.";
+                }
+                advantageKpText.textContent = kpText;
+            }
+            
+            if (advantageBoostValue && advantageVisibilityText) {
+                const boostValue = calculateTasmaniaBoost(kp, bz);
+                advantageBoostValue.textContent = `${boostValue}%`;
+                
+                const boostTexts = [
+                    `Tonight's conditions give Tasmania a ${boostValue}% visibility advantage over mainland Victoria.`,
+                    `Tasmania enjoys a ${boostValue}% better viewing chance compared to South Australia.`,
+                    `Your location has a ${boostValue}% higher probability of visible aurora than mainland locations.`
+                ];
+                advantageVisibilityText.textContent = boostTexts[Math.floor(Math.random() * boostTexts.length)];
+            }
+        } catch (error) {
+            console.warn('Error updating Tasmania advantage texts:', error);
+        }
+    }
+    
+    function calculateTasmaniaBoost(kp, bz) {
+        // Calculate how much better Tasmania is than mainland
+        let baseBoost = 30; // Base advantage
+        
+        // Increase boost during good conditions
+        if (kp >= 6) baseBoost += 20;
+        if (kp >= 7) baseBoost += 15;
+        if (bz < -10) baseBoost += 15;
+        if (bz < -15) baseBoost += 10;
+        
+        return Math.min(80, baseBoost);
+    }
+    
+    function generateTonightTip(kp, bz, solarWindSpeed) {
+        if (!tasmaniaTonightTip) return;
+        
+        let tip = "";
+        
+        // Generate tip based on current conditions
+        if (kp >= 7) {
+            tip = "🚨 EXTREME CONDITIONS! Aurora almost guaranteed. Look NORTH as well as south - displays may be overhead!";
+        } else if (kp >= 6) {
+            tip = "🔥 Excellent conditions! Head to any dark south-facing location. The aurora may be visible from 8PM onward.";
+        } else if (kp >= 5) {
+            if (bz < -10) {
+                tip = "✨ Strong southward Bz detected! Despite moderate KP, there's a good chance of visible activity. Watch the southern horizon closely.";
+            } else {
+                tip = "Good chance of visible aurora. Find a dark location with clear southern horizon (like a beach or hill).";
+            }
+        } else if (kp >= 4) {
+            if (bz < -8 && solarWindSpeed > 600) {
+                tip = "📡 Low KP but strong solar wind! Worth checking the southern horizon around midnight for possible faint glows.";
+            } else {
+                tip = "Possible faint aurora. Best viewed from very dark sites with no light pollution.";
+            }
+        } else if (kp >= 3.5 && bz < -10 && solarWindSpeed > 600) {
+            tip = "🌠 Special low-KP alert! Rare conditions may produce visible aurora. Experienced observers should monitor the southern horizon.";
+        } else {
+            tip = "Quiet conditions predicted. Check back when KP forecasts rise above 4, or monitor for sudden Bz drops.";
+        }
+        
+        // Add cloud reminder
+        const cloudReminders = [
+            " Remember to check local cloud cover before heading out.",
+            " Clear skies are essential - check the latest cloud forecast.",
+            " Don't forget: even strong auroras need clear skies to be visible."
+        ];
+        tip += cloudReminders[Math.floor(Math.random() * cloudReminders.length)];
+        
+        tasmaniaTonightTip.textContent = tip;
+    }
+    
+    // ============================
     // MAIN DATA FETCH FUNCTION - IMPROVED
     // ============================
     
@@ -1234,13 +1498,13 @@
             ]);
             
             // Determine data quality
-            let dataQuality = 'Estimated';
-            let sourceName = 'Multiple Sources';
+            let dataQualityValue = 'Estimated';
+            let dataSourceName = 'Multiple Sources';
             
             // Check if we got real data (not fallback)
             if (currentDataResult.source && currentDataResult.source.includes('NOAA')) {
-                dataQuality = currentDataResult.quality || 'Recent';
-                sourceName = currentDataResult.source;
+                dataQualityValue = currentDataResult.quality || 'Recent';
+                dataSourceName = currentDataResult.source;
                 isUsingRealData = true;
             } else {
                 isUsingRealData = false;
@@ -1252,8 +1516,8 @@
                 forecast: forecastDataResult,
                 solarWind: solarWindData,
                 timestamp: new Date(),
-                source: sourceName,
-                quality: dataQuality,
+                source: dataSourceName,
+                quality: dataQualityValue,
                 latency: Date.now() - startTime
             };
             
@@ -1272,7 +1536,7 @@
             
             if (isUsingRealData) {
                 updateStatus('✅ LIVE DATA', 'status-live');
-                dataSource.textContent = sourceName;
+                dataSource.textContent = dataSourceName;
                 verificationBadge.textContent = 'Verified';
                 verificationBadge.className = 'verification-badge verified';
                 warningAlert.className = 'alert alert-success';
@@ -1286,13 +1550,13 @@
                 warningAlert.innerHTML = '⚠️ <strong>Using estimated data.</strong> NOAA API may be temporarily unavailable.';
             }
             
-            sourceName.textContent = sourceName;
-            verifiedTime.textContent = new Date().toLocaleTimeString();
-            sourceStatus.textContent = isUsingRealData ? 'Connected' : 'Fallback';
-            sourceLatency.textContent = combinedData.latency + ' ms';
+            if (sourceName) sourceName.textContent = dataSourceName;
+            if (verifiedTime) verifiedTime.textContent = new Date().toLocaleTimeString();
+            if (sourceStatus) sourceStatus.textContent = isUsingRealData ? 'Connected' : 'Fallback';
+            if (sourceLatency) sourceLatency.textContent = combinedData.latency + ' ms';
             
             // Update data quality display
-            updateQualityDisplay(dataQuality);
+            updateQualityDisplay(dataQualityValue);
             
             showDataAlert('success', `✅ Data loaded in ${combinedData.latency}ms!`);
             
@@ -1416,106 +1680,111 @@
     }
     
     // ============================
-    // FORECAST DATA - IMPROVED
+    // FORECAST DATA - IMPROVED WITH BETTER FALLBACK
     // ============================
     
-async function fetchForecastData() {
-    try {
-        const response = await fetch(DATA_SOURCES.noaaKpForecast + '?t=' + Date.now());
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const data = await response.json();
-        if (!Array.isArray(data) || data.length < 2) {
-            throw new Error('Invalid forecast data format');
-        }
-        
-        const forecasts = [];
-        const now = new Date();
-        
-        // Parse all forecast entries
-        for (let i = 1; i < Math.min(data.length, 25); i++) {
-            const entry = data[i];
-            if (entry && entry.length >= 2) {
-                try {
-                    const timestamp = new Date(entry[0]);
-                    let kpText = String(entry[1]).trim();
-                    let kp = parseFloat(kpText);
+    async function fetchForecastData() {
+        try {
+            const response = await fetch(DATA_SOURCES.noaaKpForecast + '?t=' + Date.now());
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            if (!Array.isArray(data) || data.length < 2) {
+                throw new Error('Invalid forecast data format from NOAA');
+            }
+            
+            const forecasts = [];
+            const now = new Date();
+            
+            // Parse all forecast entries
+            for (let i = 1; i < Math.min(data.length, 25); i++) {
+                const entry = data[i];
+                if (entry && entry.length >= 2) {
+                    try {
+                        const timestamp = new Date(entry[0]);
+                        let kpText = String(entry[1]).trim();
+                        let kp = parseFloat(kpText);
 
-                    // Better handling of NOAA forecast format "3.33 (G1)"
-                    if (isNaN(kp)) {
-                        // Extract just the number before the space
-                        const parts = kpText.split(' ');
-                        if (parts.length > 0) {
-                            kp = parseFloat(parts[0]);
-                        }
+                        // Better handling of NOAA forecast format "3.33 (G1)"
                         if (isNaN(kp)) {
-                            // Try regex as last resort
-                            const match = kpText.match(/(\d+(\.\d+)?)/);
-                            if (match) kp = parseFloat(match[0]);
+                            // Extract just the number before the space
+                            const parts = kpText.split(' ');
+                            if (parts.length > 0) {
+                                kp = parseFloat(parts[0]);
+                            }
+                            if (isNaN(kp)) {
+                                // Try regex as last resort
+                                const match = kpText.match(/(\d+(\.\d+)?)/);
+                                if (match) kp = parseFloat(match[0]);
+                            }
                         }
+                        
+                        // CLAMP THE KP VALUE TO 0-9 RANGE
+                        kp = Math.min(9, Math.max(0, kp));
+                        
+                        // Add the parsed data to the array
+                        if (!isNaN(kp) && timestamp > now) {
+                            forecasts.push({
+                                timestamp: timestamp,
+                                kp: kp,
+                                isEstimated: entry.length > 2 && entry[2] === 'estimated'
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Skipping invalid forecast entry:', e);
+                        continue;
                     }
-                    
-                    // CLAMP THE KP VALUE TO 0-9 RANGE
-                    kp = Math.min(9, Math.max(0, kp));
-                    
-                    // Add the parsed data to the array
-                    if (!isNaN(kp) && timestamp > now) {
-                        forecasts.push({
-                            timestamp: timestamp,
-                            kp: kp,
-                            isEstimated: entry.length > 2 && entry[2] === 'estimated'
-                        });
-                    }
-                } catch (e) {
-                    console.warn('Skipping invalid forecast entry:', e);
                 }
             }
+            
+            // If we have SOME data but not enough, still use it
+            if (forecasts.length === 0) {
+                console.warn('No valid forecast timestamps found in NOAA data');
+                throw new Error('No valid forecast data in NOAA response');
+            }
+            
+            // Sort by timestamp
+            forecasts.sort((a, b) => a.timestamp - b.timestamp);
+            
+            // Group by day and find peaks
+            const todayStr = now.toDateString();
+            const today = forecasts.filter(f => f.timestamp.toDateString() === todayStr);
+            
+            const tomorrowDate = new Date(now);
+            tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+            const tomorrowStr = tomorrowDate.toDateString();
+            const tomorrow = forecasts.filter(f => f.timestamp.toDateString() === tomorrowStr);
+            
+            const day3Date = new Date(now);
+            day3Date.setDate(day3Date.getDate() + 2);
+            const day3Str = day3Date.toDateString();
+            const day3 = forecasts.filter(f => f.timestamp.toDateString() === day3Str);
+            
+            // Calculate peaks with fallbacks
+            const peakToday = today.length > 0 ? Math.max(...today.map(f => f.kp)) : 
+                            forecasts.length > 0 ? Math.max(...forecasts.map(f => f.kp)) : 3.0;
+            const peakTomorrow = tomorrow.length > 0 ? Math.max(...tomorrow.map(f => f.kp)) : peakToday;
+            const peakDay3 = day3.length > 0 ? Math.max(...day3.map(f => f.kp)) : peakTomorrow;
+            
+            return {
+                allForecasts: forecasts,
+                today: today,
+                tomorrow: tomorrow,
+                day3: day3,
+                peakToday: peakToday,
+                peakTomorrow: peakTomorrow,
+                peakDay3: peakDay3,
+                source: 'NOAA 3-Day Forecast',
+                isReal: true
+            };
+            
+        } catch (error) {
+            console.warn('Forecast fetch failed, using fallback:', error);
+            return generateFallbackForecast();
         }
-        
-        if (forecasts.length === 0) {
-            throw new Error('No valid forecast data available');
-        }
-        
-        // Sort by timestamp
-        forecasts.sort((a, b) => a.timestamp - b.timestamp);
-        
-        // Group by day and find peaks
-        const todayStr = now.toDateString();
-        const today = forecasts.filter(f => f.timestamp.toDateString() === todayStr);
-        
-        const tomorrowDate = new Date(now);
-        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-        const tomorrowStr = tomorrowDate.toDateString();
-        const tomorrow = forecasts.filter(f => f.timestamp.toDateString() === tomorrowStr);
-        
-        const day3Date = new Date(now);
-        day3Date.setDate(day3Date.getDate() + 2);
-        const day3Str = day3Date.toDateString();
-        const day3 = forecasts.filter(f => f.timestamp.toDateString() === day3Str);
-        
-        // Calculate peaks with fallbacks
-        const peakToday = today.length > 0 ? Math.max(...today.map(f => f.kp)) : 
-                        forecasts.length > 0 ? forecasts[0].kp : 3.0;
-        const peakTomorrow = tomorrow.length > 0 ? Math.max(...tomorrow.map(f => f.kp)) : peakToday;
-        const peakDay3 = day3.length > 0 ? Math.max(...day3.map(f => f.kp)) : peakTomorrow;
-        
-        return {
-            allForecasts: forecasts,
-            today: today,
-            tomorrow: tomorrow,
-            day3: day3,
-            peakToday: peakToday,
-            peakTomorrow: peakTomorrow,
-            peakDay3: peakDay3,
-            source: 'NOAA 3-Day Forecast',
-            isReal: true
-        };
-        
-    } catch (error) {
-        console.warn('Forecast fetch failed:', error);
-        return generateFallbackForecast();
     }
-}
     
     // ============================
     // SOLAR WIND DATA - IMPROVED
@@ -1643,6 +1912,7 @@ async function fetchForecastData() {
     }
     
     function generateFallbackForecast() {
+        console.log('Generating fallback forecast data');
         const forecasts = [];
         const now = new Date();
         let baseKp = 3.0;
@@ -1691,6 +1961,7 @@ async function fetchForecastData() {
     }
     
     function useFallbackData() {
+        console.log('Using fallback data');
         const fallbackData = {
             ...generateFallbackKpData(),
             solarWind: generateFallbackSolarWindData(),
@@ -1711,8 +1982,8 @@ async function fetchForecastData() {
         dataSource.textContent = 'Estimated (API Error)';
         verificationBadge.textContent = 'Unverified';
         verificationBadge.className = 'verification-badge unverified';
-        sourceName.textContent = 'Estimated Data';
-        sourceStatus.textContent = 'Fallback';
+        if (sourceName) sourceName.textContent = 'Estimated Data';
+        if (sourceStatus) sourceStatus.textContent = 'Fallback';
         updateQualityDisplay('Estimated');
         
         showDataAlert('warning', '⚠️ Using estimated data. NOAA API may be temporarily unavailable.');
@@ -1806,6 +2077,8 @@ async function fetchForecastData() {
     }
     
     function setDialColor(element, value, goodMin, goodMax) {
+        if (!element) return;
+        
         element.classList.remove('good', 'fair', 'poor', 'excellent');
         
         if (goodMin !== undefined && goodMax !== undefined) {
@@ -1830,6 +2103,8 @@ async function fetchForecastData() {
     }
     
     function updateQualityDisplay(quality) {
+        if (!qualityText || !qualityIndicator || !dataQuality) return;
+        
         qualityText.textContent = quality;
         
         switch(quality) {
@@ -1866,22 +2141,27 @@ async function fetchForecastData() {
             case 'tasmania':
                 chance = visibility.tasmania;
                 currentLocation.textContent = 'Tasmania';
+                updateTasmaniaAdvantage(currentData);
                 break;
             case 'victoria':
                 chance = visibility.victoria;
                 currentLocation.textContent = 'Victoria';
+                if (tasmaniaAdvantagePanel) tasmaniaAdvantagePanel.style.display = 'none';
                 break;
             case 'south-aus':
                 chance = visibility.southAustralia;
                 currentLocation.textContent = 'South Australia';
+                if (tasmaniaAdvantagePanel) tasmaniaAdvantagePanel.style.display = 'none';
                 break;
             case 'west-aus':
                 chance = visibility.westernAustralia;
                 currentLocation.textContent = 'Western Australia';
+                if (tasmaniaAdvantagePanel) tasmaniaAdvantagePanel.style.display = 'none';
                 break;
             case 'nsw':
                 chance = visibility.newSouthWales;
                 currentLocation.textContent = 'New South Wales';
+                if (tasmaniaAdvantagePanel) tasmaniaAdvantagePanel.style.display = 'none';
                 break;
         }
         
@@ -1891,23 +2171,38 @@ async function fetchForecastData() {
         moonPhase.textContent = getMoonPhase(new Date());
         
         const coverage = Math.min(95, chance * 0.8);
-        visibilityCoverageFill.style.width = `${coverage}%`;
-        visibilityCoverageValue.textContent = `${coverage}%`;
+        if (visibilityCoverageFill) visibilityCoverageFill.style.width = `${coverage}%`;
+        if (visibilityCoverageValue) visibilityCoverageValue.textContent = `${coverage}%`;
     }
     
-    function selectLocation(location) {
+    function selectLocation(location, event = null) {
         selectedLocation = location;
         
         document.querySelectorAll('.tab').forEach(tab => {
             tab.classList.remove('active');
         });
-        event.target.classList.add('active');
+        
+        // Only access event.target if event exists
+        if (event && event.target) {
+            event.target.classList.add('active');
+        } else {
+            // Fallback: find the tab with the matching location and activate it
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(location.toLowerCase()) || 
+                    (tab.getAttribute('onclick') && tab.getAttribute('onclick').includes(location))) {
+                    tab.classList.add('active');
+                }
+            });
+        }
         
         updateLocationInfo();
     }
     
     function updateForecastChart(forecastData) {
-        if (!forecastData || !forecastData.allForecasts) return;
+        if (!forecastData || !forecastData.allForecasts || !Array.isArray(forecastData.allForecasts)) {
+            console.warn('Invalid forecast data for chart:', forecastData);
+            return;
+        }
         
         const existingBars = forecastChartContainer.querySelectorAll('.forecast-bar-container');
         existingBars.forEach(bar => bar.remove());
@@ -1952,7 +2247,10 @@ async function fetchForecastData() {
             });
         }
         
-        if (forecastsToShow.length === 0) return;
+        if (forecastsToShow.length === 0) {
+            console.warn('No forecasts to show');
+            return;
+        }
         
         const containerWidth = forecastChartContainer.clientWidth - 40;
         const barWidth = Math.max(20, containerWidth / forecastsToShow.length - 10);
@@ -1993,19 +2291,19 @@ async function fetchForecastData() {
             forecastChartContainer.appendChild(barContainer);
         });
         
-        if (forecastData.peakToday !== undefined) {
+        if (peakToday && forecastData.peakToday !== undefined) {
             peakToday.textContent = forecastData.peakToday.toFixed(1) + ' KP';
             if (forecastData.peakToday >= 6) {
                 peakToday.innerHTML += '<span class="peak-badge">HIGH</span>';
             }
         }
-        if (forecastData.peakTomorrow !== undefined) {
+        if (peakTomorrow && forecastData.peakTomorrow !== undefined) {
             peakTomorrow.textContent = forecastData.peakTomorrow.toFixed(1) + ' KP';
             if (forecastData.peakTomorrow >= 6) {
                 peakTomorrow.innerHTML += '<span class="peak-badge">HIGH</span>';
             }
         }
-        if (forecastData.peakDay3 !== undefined) {
+        if (peakDay3 && forecastData.peakDay3 !== undefined) {
             peakDay3.textContent = forecastData.peakDay3.toFixed(1) + ' KP';
             if (forecastData.peakDay3 >= 6) {
                 peakDay3.innerHTML += '<span class="peak-badge">HIGH</span>';
@@ -2017,28 +2315,41 @@ async function fetchForecastData() {
             return hour >= 20 || hour <= 4;
         });
         
-        if (nightForecasts.length > 0) {
-            const bestForecast = nightForecasts.reduce((best, current) => 
-                current.kp > best.kp ? current : best
-            );
-            bestViewingTime.textContent = bestForecast.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } else if (forecastsToShow.length > 0) {
-            const bestForecast = forecastsToShow.reduce((best, current) => 
-                current.kp > best.kp ? current : best
-            );
-            bestViewingTime.textContent = bestForecast.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } else {
-            bestViewingTime.textContent = '--:--';
+        if (bestViewingTime) {
+            if (nightForecasts.length > 0) {
+                const bestForecast = nightForecasts.reduce((best, current) => 
+                    current.kp > best.kp ? current : best
+                );
+                bestViewingTime.textContent = bestForecast.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else if (forecastsToShow.length > 0) {
+                const bestForecast = forecastsToShow.reduce((best, current) => 
+                    current.kp > best.kp ? current : best
+                );
+                bestViewingTime.textContent = bestForecast.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else {
+                bestViewingTime.textContent = '--:--';
+            }
         }
     }
     
-    function selectForecastInterval(interval) {
+    function selectForecastInterval(interval, event = null) {
         forecastInterval = interval;
         
         document.querySelectorAll('.interval-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        event.target.classList.add('active');
+        
+        // Only access event.target if event exists
+        if (event && event.target) {
+            event.target.classList.add('active');
+        } else {
+            // Fallback: find the button with the matching interval
+            document.querySelectorAll('.interval-btn').forEach(btn => {
+                if (btn.textContent.toLowerCase().includes(interval)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
         
         if (forecastData) {
             updateForecastChart(forecastData);
@@ -2066,7 +2377,7 @@ async function fetchForecastData() {
     }
     
     function calculateIdealViewingTime(forecastData) {
-        if (!forecastData || !forecastData.allForecasts) {
+        if (!forecastData || !forecastData.allForecasts || !Array.isArray(forecastData.allForecasts)) {
             return { time: '--:--', kp: 0, duration: 0 };
         }
         
@@ -2162,6 +2473,8 @@ async function fetchForecastData() {
     }
     
     function checkForAlerts(data) {
+        if (!alertsList) return;
+        
         const alerts = [];
         
         if (data.kp >= 8) {
@@ -2201,16 +2514,19 @@ async function fetchForecastData() {
     }
     
     function updateStatus(message, className) {
+        if (!dataStatus) return;
         dataStatus.textContent = message;
         dataStatus.className = `data-status ${className}`;
     }
     
     function showLoading(show, message = 'Loading...') {
+        if (!loadingDiv || !loadingMessage) return;
         loadingDiv.style.display = show ? 'block' : 'none';
         if (show) loadingMessage.textContent = message;
     }
     
     function showDataAlert(type, message) {
+        if (!dataAlert) return;
         dataAlert.textContent = message;
         dataAlert.className = `alert alert-${type}`;
         dataAlert.style.display = 'block';
@@ -2225,7 +2541,7 @@ async function fetchForecastData() {
             clearTimeout(window.nextUpdateTimeout);
         }
         
-        if (isUsingRealData) {
+        if (isUsingRealData && nextUpdate) {
             const nextUpdateTime = new Date(Date.now() + 10 * 60 * 1000);
             nextUpdate.textContent = nextUpdateTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
@@ -2234,7 +2550,7 @@ async function fetchForecastData() {
                     fetchRealData();
                 }
             }, 10 * 60 * 1000);
-        } else {
+        } else if (nextUpdate) {
             nextUpdate.textContent = '--:--';
         }
     }
@@ -2264,16 +2580,37 @@ async function fetchForecastData() {
     }
     
     // ============================
-    // INITIALIZATION
+    // INITIALIZATION & ERROR HANDLING
     // ============================
     
+    // Global error handler
+    window.addEventListener('error', function(e) {
+        console.error('Uncaught error:', e.error, 'at', e.filename, ':', e.lineno);
+        showDataAlert('error', `An unexpected error occurred. Please refresh the page.`);
+        return true;
+    });
+    
+    // Promise rejection handler
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled promise rejection:', e.reason);
+        showDataAlert('error', `Data fetch error: ${e.reason?.message || 'Unknown error'}`);
+    });
+    
     document.addEventListener('DOMContentLoaded', () => {
-        createStarfield();
-        fetchRealData();
-        
-        setInterval(() => {
-            lastUpdatedTime.textContent = new Date().toLocaleTimeString();
-        }, 1000);
+        try {
+            createStarfield();
+            fetchRealData();
+            
+            setInterval(() => {
+                if (lastUpdatedTime) {
+                    lastUpdatedTime.textContent = new Date().toLocaleTimeString();
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Initialization error:', error);
+            showDataAlert('error', `Failed to initialize: ${error.message}`);
+            useFallbackData();
+        }
     });
 </script>
 </body>
