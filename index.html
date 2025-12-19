@@ -522,6 +522,103 @@
             color: #ff5500;
         }
         
+
+/* Tasmania Advantage Panel */
+.tasmania-advantage {
+    background: linear-gradient(135deg, 
+        rgba(0, 100, 200, 0.15), 
+        rgba(138, 43, 226, 0.15));
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    display: none;
+    animation: fadeIn 0.8s ease;
+}
+
+.tasmania-advantage::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        var(--aurora-green), 
+        var(--aurora-blue), 
+        var(--aurora-purple));
+}
+
+.tasmania-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: var(--aurora-blue);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.tasmania-icon {
+    font-size: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.tasmania-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tasmania-point-icon {
+    color: var(--aurora-green);
+    font-size: 1.1rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.tasmania-point strong {
+    color: white;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.tasmania-point span {
+    color: #a0d2ff;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.tasmania-tip {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(0, 210, 255, 0.1);
+    border-radius: 10px;
+    border-left: 4px solid var(--aurora-green);
+}
+
+.tasmania-tip strong {
+    color: var(--aurora-green);
+    display: block;
+    margin-bottom: 5px;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
         .forecast-interval-selector {
             display: flex;
             gap: 0.5rem;
@@ -956,6 +1053,43 @@
                         </div>
                     </div>
                     
+<!-- Tasmania Advantage Panel -->
+<div class="card tasmania-advantage" id="tasmaniaAdvantage">
+    <div class="tasmania-header">
+        <span class="tasmania-icon">📍</span>
+        The Tasmania Advantage
+    </div>
+    
+    <div class="tasmania-point">
+        <span class="tasmania-point-icon">⚡</span>
+        <div>
+            <strong>Prime Auroral Location</strong>
+            <span id="advantageLocationText">Tasmania is closer to the southern auroral oval than any other Australian state.</span>
+        </div>
+    </div>
+    
+    <div class="tasmania-point">
+        <span class="tasmania-point-icon">👁️</span>
+        <div>
+            <strong>Lower KP Threshold</strong>
+            <span id="advantageKpText">Visible auroras can occur here at KP levels as low as 3-4 during optimal conditions.</span>
+        </div>
+    </div>
+    
+    <div class="tasmania-point">
+        <span class="tasmania-point-icon">🌌</span>
+        <div>
+            <strong>Enhanced Visibility</strong>
+            <span id="advantageVisibilityText">Tonight's conditions give Tasmania a <span id="advantageBoostValue">30%</span> visibility boost compared to mainland locations.</span>
+        </div>
+    </div>
+    
+    <div class="tasmania-tip">
+        <strong>💡 Tonight's Tasmanian Tip:</strong>
+        <span id="tasmaniaTonightTip">Loading tonight's specific advice...</span>
+    </div>
+</div>
+
                     <!-- Forecast Chart -->
                     <div class="card">
                         <div class="card-header">
@@ -1204,6 +1338,119 @@
         }
     }
     
+// ============================
+// TASMANIA ADVANTAGE FUNCTIONS
+// ============================
+
+function updateTasmaniaAdvantage(data) {
+    const panel = document.getElementById('tasmaniaAdvantage');
+    if (!panel || selectedLocation !== 'tasmania') {
+        if (panel) panel.style.display = 'none';
+        return;
+    }
+    
+    // Show the panel
+    panel.style.display = 'block';
+    
+    // Calculate Tasmania-specific metrics
+    const kp = data.kp || 0;
+    const bz = data.solarWind?.bz || 0;
+    const solarWindSpeed = data.solarWind?.speed || 400;
+    
+    // Update advantage points with real-time data
+    updateAdvantageTexts(kp, bz, solarWindSpeed, data);
+    
+    // Generate tonight's specific tip
+    generateTonightTip(kp, bz, solarWindSpeed);
+}
+
+function updateAdvantageTexts(kp, bz, solarWindSpeed, data) {
+    // Location advantage text
+    const locationTexts = [
+        "Tasmania's southern position puts you closest to the auroral oval.",
+        "At -42° latitude, Tasmania is Australia's prime aurora viewing location.",
+        "Your location is approximately 8-10° closer to the auroral oval than mainland capitals."
+    ];
+    document.getElementById('advantageLocationText').textContent = 
+        locationTexts[Math.floor(Math.random() * locationTexts.length)];
+    
+    // KP threshold text (dynamic based on conditions)
+    let kpText = "";
+    const lowKpPossible = (kp >= 3.5 && bz < -8 && solarWindSpeed > 550);
+    
+    if (lowKpPossible) {
+        kpText = `With current strong solar wind (Bz: ${bz.toFixed(1)} nT), aurora may be visible even at KP${kp.toFixed(1)}.`;
+    } else if (kp >= 4) {
+        kpText = `At KP${kp.toFixed(1)}, Tasmania has visible aurora when mainland locations see only horizon glows.`;
+    } else {
+        kpText = "Visible auroras can occur here at KP levels as low as 3-4 during optimal solar wind conditions.";
+    }
+    document.getElementById('advantageKpText').textContent = kpText;
+    
+    // Visibility boost calculation
+    const boostValue = calculateTasmaniaBoost(kp, bz);
+    document.getElementById('advantageBoostValue').textContent = `${boostValue}%`;
+    
+    const boostTexts = [
+        `Tonight's conditions give Tasmania a ${boostValue}% visibility advantage over mainland Victoria.`,
+        `Tasmania enjoys a ${boostValue}% better viewing chance compared to South Australia.`,
+        `Your location has a ${boostValue}% higher probability of visible aurora than mainland locations.`
+    ];
+    document.getElementById('advantageVisibilityText').textContent = 
+        boostTexts[Math.floor(Math.random() * boostTexts.length)];
+}
+
+function calculateTasmaniaBoost(kp, bz) {
+    // Calculate how much better Tasmania is than mainland
+    let baseBoost = 30; // Base advantage
+    
+    // Increase boost during good conditions
+    if (kp >= 6) baseBoost += 20;
+    if (kp >= 7) baseBoost += 15;
+    if (bz < -10) baseBoost += 15;
+    if (bz < -15) baseBoost += 10;
+    
+    return Math.min(80, baseBoost);
+}
+
+function generateTonightTip(kp, bz, solarWindSpeed) {
+    const tipElement = document.getElementById('tasmaniaTonightTip');
+    let tip = "";
+    
+    // Generate tip based on current conditions
+    if (kp >= 7) {
+        tip = "🚨 EXTREME CONDITIONS! Aurora almost guaranteed. Look NORTH as well as south - displays may be overhead!";
+    } else if (kp >= 6) {
+        tip = "🔥 Excellent conditions! Head to any dark south-facing location. The aurora may be visible from 8PM onward.";
+    } else if (kp >= 5) {
+        if (bz < -10) {
+            tip = "✨ Strong southward Bz detected! Despite moderate KP, there's a good chance of visible activity. Watch the southern horizon closely.";
+        } else {
+            tip = "Good chance of visible aurora. Find a dark location with clear southern horizon (like a beach or hill).";
+        }
+    } else if (kp >= 4) {
+        if (bz < -8 && solarWindSpeed > 600) {
+            tip = "📡 Low KP but strong solar wind! Worth checking the southern horizon around midnight for possible faint glows.";
+        } else {
+            tip = "Possible faint aurora. Best viewed from very dark sites with no light pollution.";
+        }
+    } else if (kp >= 3.5 && bz < -10 && solarWindSpeed > 600) {
+        tip = "🌠 Special low-KP alert! Rare conditions may produce visible aurora. Experienced observers should monitor the southern horizon.";
+    } else {
+        tip = "Quiet conditions predicted. Check back when KP forecasts rise above 4, or monitor for sudden Bz drops.";
+    }
+    
+    // Add cloud reminder (you can integrate actual cloud data here later)
+    const cloudReminders = [
+        " Remember to check local cloud cover before heading out.",
+        " Clear skies are essential - check the latest cloud forecast.",
+        " Don't forget: even strong auroras need clear skies to be visible."
+    ];
+    tip += cloudReminders[Math.floor(Math.random() * cloudReminders.length)];
+    
+    tipElement.textContent = tip;
+}
+
     // ============================
     // MAIN DATA FETCH FUNCTION - IMPROVED
     // ============================
@@ -1855,45 +2102,53 @@ async function fetchForecastData() {
         }
     }
     
-    function updateLocationInfo() {
-        if (!currentData) return;
-        
-        const kp = currentData.kp || 0;
-        const visibility = calculateVisibility(kp);
-        let chance = 0;
-        
-        switch(selectedLocation) {
-            case 'tasmania':
-                chance = visibility.tasmania;
-                currentLocation.textContent = 'Tasmania';
-                break;
-            case 'victoria':
-                chance = visibility.victoria;
-                currentLocation.textContent = 'Victoria';
-                break;
-            case 'south-aus':
-                chance = visibility.southAustralia;
-                currentLocation.textContent = 'South Australia';
-                break;
-            case 'west-aus':
-                chance = visibility.westernAustralia;
-                currentLocation.textContent = 'Western Australia';
-                break;
-            case 'nsw':
-                chance = visibility.newSouthWales;
-                currentLocation.textContent = 'New South Wales';
-                break;
-        }
-        
-        locationChance.textContent = Math.round(chance) + '%';
-        setDialColor(locationChance, chance, 50, 100);
-        bestTime.textContent = calculateBestViewingTime();
-        moonPhase.textContent = getMoonPhase(new Date());
-        
-        const coverage = Math.min(95, chance * 0.8);
-        visibilityCoverageFill.style.width = `${coverage}%`;
-        visibilityCoverageValue.textContent = `${coverage}%`;
+function updateLocationInfo() {
+    if (!currentData) return;
+    
+    const kp = currentData.kp || 0;
+    const visibility = calculateVisibility(kp);
+    let chance = 0;
+    
+    switch(selectedLocation) {
+        case 'tasmania':
+            chance = visibility.tasmania;
+            currentLocation.textContent = 'Tasmania';
+            
+            // ✅ ADD THIS LINE - Show Tasmania advantage panel
+            updateTasmaniaAdvantage(currentData);
+            break;
+        case 'victoria':
+            chance = visibility.victoria;
+            currentLocation.textContent = 'Victoria';
+            // ✅ ADD THIS LINE - Hide Tasmania panel
+            document.getElementById('tasmaniaAdvantage').style.display = 'none';
+            break;
+        case 'south-aus':
+            chance = visibility.southAustralia;
+            currentLocation.textContent = 'South Australia';
+            document.getElementById('tasmaniaAdvantage').style.display = 'none';
+            break;
+        case 'west-aus':
+            chance = visibility.westernAustralia;
+            currentLocation.textContent = 'Western Australia';
+            document.getElementById('tasmaniaAdvantage').style.display = 'none';
+            break;
+        case 'nsw':
+            chance = visibility.newSouthWales;
+            currentLocation.textContent = 'New South Wales';
+            document.getElementById('tasmaniaAdvantage').style.display = 'none';
+            break;
     }
+    
+    locationChance.textContent = Math.round(chance) + '%';
+    setDialColor(locationChance, chance, 50, 100);
+    bestTime.textContent = calculateBestViewingTime();
+    moonPhase.textContent = getMoonPhase(new Date());
+    
+    const coverage = Math.min(95, chance * 0.8);
+    visibilityCoverageFill.style.width = `${coverage}%`;
+    visibilityCoverageValue.textContent = `${coverage}%`;
+}
     
     function selectLocation(location) {
         selectedLocation = location;
