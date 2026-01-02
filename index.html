@@ -1505,19 +1505,19 @@
                 // Try BOM first
                 await fetchBOMData(startTime);
             } else {
-                // Use NOAA directly
+                // Use NOAA directly - don't try BOM at all
                 await fetchNOAAData(startTime);
             }
             
         } catch (error) {
             console.error('Failed to fetch data:', error);
             
-            // If BOM failed but we wanted BOM, try NOAA as fallback
+            // If we wanted BOM but it failed, fall back to NOAA
             if (isUsingBOM) {
                 showDataAlert('warning', '⚠️ BOM data unavailable. Falling back to NOAA...');
                 await fetchNOAAData(Date.now());
             } else {
-                // NOAA also failed, use fallback data
+                // NOAA also failed
                 showDataAlert('error', `❌ Could not fetch data: ${error.message}. Using estimated data.`);
                 useFallbackData();
             }
@@ -3120,6 +3120,28 @@
     document.addEventListener('DOMContentLoaded', () => {
         try {
             createStarfield();
+            
+            // Initialize the toggle state
+            isUsingBOM = useBOMToggle.checked;
+            
+            // Add event listener for the toggle switch
+            useBOMToggle.addEventListener('change', function() {
+                isUsingBOM = this.checked;
+                
+                // Update UI immediately
+                if (isUsingBOM) {
+                    dataSource.textContent = 'Switching to BOM...';
+                    verificationBadge.className = 'verification-badge bom-badge';
+                    verificationBadge.innerHTML = '<span class="source-indicator source-bom"></span> BOM Data';
+                } else {
+                    dataSource.textContent = 'Switching to NOAA...';
+                    verificationBadge.className = 'verification-badge noaa-badge';
+                    verificationBadge.innerHTML = '<span class="source-indicator source-noaa"></span> NOAA Data';
+                }
+                
+                fetchData(); // Refresh data when toggle changes
+            });
+            
             fetchData();
             
             setInterval(() => {
